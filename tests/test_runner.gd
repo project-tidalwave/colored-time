@@ -22,6 +22,7 @@ func _init() -> void:
 	all_passed = test_procedural_sfx() and all_passed
 	all_passed = test_procedural_background_3d() and all_passed
 	all_passed = test_main_scene_instantiation() and all_passed
+	all_passed = test_ui_interaction() and all_passed
 	
 	if all_passed:
 		print("\n>>> ALL TESTS PASSED SUCCESSFULLY! <<<")
@@ -238,5 +239,87 @@ func test_main_scene_instantiation() -> bool:
 	main_node._process(0.016)
 	
 	print("  ✓ Main scene booted and initialized cleanly.")
+	main_node.queue_free()
+	return true
+
+func test_ui_interaction() -> bool:
+	print("\n[TEST 7] UI Interaction & Screen Boundaries...")
+	root.size = Vector2i(1280, 800)
+	var main_scene := load("res://scenes/Main.tscn") as PackedScene
+	var main_node = main_scene.instantiate()
+	root.add_child(main_node)
+	if not main_node.bg_3d:
+		main_node._ready()
+	
+	var hud: ArcadeHUD = main_node.hud
+	var board_view: BoardView = main_node.board_view
+	
+	# Verify Carousel buttons are fully within the 1280x800 viewport
+	var buttons_found: Array[Button] = []
+	for b in hud.find_children("*", "Button", true, false):
+		if hud.carousel_layer.is_ancestor_of(b):
+			buttons_found.append(b)
+			var r: Rect2 = b.get_global_rect()
+			print("Carousel Button: '", b.text, "' rect: ", r)
+			if r.position.y < 0 or r.end.y > 800 or r.position.x < 0 or r.end.x > 1280:
+				printerr("FAIL: Button off-screen: '", b.text, "' rect: ", r)
+				return false
+	
+	if buttons_found.size() < 4:
+		printerr("FAIL: Expected 4 carousel buttons, found ", buttons_found.size())
+		return false
+	
+	if buttons_found.size() < 4:
+		printerr("FAIL: Expected at least 4 visible carousel buttons, found ", buttons_found.size())
+		return false
+	
+	print("  ✓ All carousel buttons strictly inside 1280x800 viewport boundaries.")
+	
+	# Launch campaign
+	main_node._on_play_campaign(1)
+	
+	# Test BoardView unhandled input cell click
+	var test_cell := Vector2i(2, 3)
+	var cell_center := board_view.global_position + Vector2(test_cell.x * 70.0 + 35.0, test_cell.y * 70.0 + 35.0)
+	
+	var ev := InputEventMouseButton.new()
+	ev.position = cell_center
+	ev.global_position = cell_center
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	board_view._unhandled_input(ev)
+	
+	if board_view.selected_cell != test_cell:
+		printerr("FAIL: BoardView did not select cell on click. Expected: ", test_cell, " got: ", board_view.selected_cell)
+		return false
+	
+	print("  ✓ BoardView click interaction and cell selection verified.")
+	
+	# Test swapping adjacent cell
+	var swap_cell := Vector2i(3, 3)
+	var swap_center := board_view.global_position + Vector2(swap_cell.x * 70.0 + 35.0, swap_cell.y * 70.0 + 35.0)
+	var ev_swap := InputEventMouseButton.new()
+	ev_swap.position = swap_center
+	ev_swap.global_position = swap_center
+	ev_swap.button_index = MOUSE_BUTTON_LEFT
+	ev_swap.pressed = true
+	
+	var swap_data := {
+		"fired": false,
+		"p1": Vector2i(-1, -1),
+		"p2": Vector2i(-1, -1)
+	}
+	board_view.swap_requested.connect(func(p1: Vector2i, p2: Vector2i):
+		swap_data["fired"] = true
+		swap_data["p1"] = p1
+		swap_data["p2"] = p2
+	)
+	board_view._unhandled_input(ev_swap)
+	
+	if not swap_data["fired"] or swap_data["p1"] != test_cell or swap_data["p2"] != swap_cell:
+		printerr("FAIL: BoardView swap_requested not fired properly on second click: ", swap_data["p1"], " -> ", swap_data["p2"])
+		return false
+	
+	print("  ✓ BoardView adjacent cell swap request verified.")
 	main_node.queue_free()
 	return true

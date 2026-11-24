@@ -43,6 +43,7 @@ var modal_next_btn: Button
 func _init() -> void:
 	name = "ArcadeHUD"
 	set_anchors_preset(PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_build_ingame_hud()
 	_build_carousel_overlay()
 	_build_modal_layer()
@@ -53,9 +54,9 @@ func _ready() -> void:
 func _build_ingame_hud() -> void:
 	ingame_layer = Control.new()
 	ingame_layer.set_anchors_preset(PRESET_FULL_RECT)
-	ingame_layer.mouse_filter = MOUSE_FILTER_IGNORE
+	ingame_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ingame_layer)
-	
+
 	# Top Header Bar
 	var top_bar := Panel.new()
 	top_bar.custom_minimum_size = Vector2(0, 90)
@@ -66,13 +67,13 @@ func _build_ingame_hud() -> void:
 	sb.border_color = Color(0.2, 0.6, 1.0, 0.4)
 	top_bar.add_theme_stylebox_override("panel", sb)
 	ingame_layer.add_child(top_bar)
-	
+
 	var hbox := HBoxContainer.new()
 	hbox.set_anchors_preset(PRESET_FULL_RECT)
 	hbox.offset_left = 30
 	hbox.offset_right = -30
 	top_bar.add_child(hbox)
-	
+
 	# Track metadata
 	var track_box := VBoxContainer.new()
 	track_box.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -85,12 +86,12 @@ func _build_ingame_hud() -> void:
 	track_box.add_child(track_title_label)
 	track_box.add_child(track_info_pill)
 	hbox.add_child(track_box)
-	
+
 	# Central Beat Metronome & Chrono Gauge
 	var center_box := VBoxContainer.new()
 	center_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	center_box.custom_minimum_size = Vector2(360, 0)
-	
+
 	# Beat indicator
 	var beat_bar := HBoxContainer.new()
 	beat_bar.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -99,7 +100,7 @@ func _build_ingame_hud() -> void:
 	beat_ring.color = Color(0.0, 1.0, 0.8, 1.0)
 	beat_bar.add_child(beat_ring)
 	center_box.add_child(beat_bar)
-	
+
 	# Chrono Gauge
 	chrono_gauge = ProgressBar.new()
 	chrono_gauge.custom_minimum_size = Vector2(340, 18)
@@ -108,17 +109,17 @@ func _build_ingame_hud() -> void:
 	chrono_gauge.show_percentage = false
 	center_box.add_child(chrono_gauge)
 	hbox.add_child(center_box)
-	
+
 	# Stats Box (Score, Multiplier, Time, Ice)
 	var stats_box := VBoxContainer.new()
 	stats_box.size_flags_horizontal = SIZE_EXPAND_FILL
 	stats_box.alignment = BoxContainer.ALIGNMENT_CENTER
-	
+
 	score_label = Label.new()
 	score_label.text = "SCORE: 0"
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	score_label.add_theme_font_size_override("font_size", 20)
-	
+
 	var sub_stats := HBoxContainer.new()
 	sub_stats.alignment = BoxContainer.ALIGNMENT_END
 	time_label = Label.new()
@@ -128,15 +129,15 @@ func _build_ingame_hud() -> void:
 	combo_label = Label.new()
 	combo_label.text = "CHAIN: 1x"
 	combo_label.modulate = Color(1.0, 0.85, 0.2)
-	
+
 	sub_stats.add_child(time_label)
 	sub_stats.add_child(ice_label)
 	sub_stats.add_child(combo_label)
-	
+
 	stats_box.add_child(score_label)
 	stats_box.add_child(sub_stats)
 	hbox.add_child(stats_box)
-	
+
 	# Floating On-Beat Banner
 	on_beat_popup = Label.new()
 	on_beat_popup.text = "ON BEAT! 1.5x"
@@ -146,7 +147,7 @@ func _build_ingame_hud() -> void:
 	on_beat_popup.modulate = Color(1.0, 0.9, 0.1, 0.0)
 	on_beat_popup.add_theme_font_size_override("font_size", 24)
 	ingame_layer.add_child(on_beat_popup)
-	
+
 	# Pause button
 	var pause_btn := Button.new()
 	pause_btn.text = " ⏸ Pause "
@@ -157,45 +158,44 @@ func _build_ingame_hud() -> void:
 func _build_carousel_overlay() -> void:
 	carousel_layer = Control.new()
 	carousel_layer.set_anchors_preset(PRESET_FULL_RECT)
+	carousel_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(carousel_layer)
-	
+
 	# Dark semi-transparent scrim
 	var scrim := ColorRect.new()
 	scrim.set_anchors_preset(PRESET_FULL_RECT)
 	scrim.color = Color(0.02, 0.02, 0.06, 0.65)
+	scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	carousel_layer.add_child(scrim)
-	
+
 	var main_vbox := VBoxContainer.new()
 	main_vbox.set_anchors_preset(PRESET_FULL_RECT)
-	main_vbox.offset_left = 60
-	main_vbox.offset_right = -60
-	main_vbox.offset_top = 40
-	main_vbox.offset_bottom = -40
+	main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	main_vbox.add_theme_constant_override("separation", 18)
+	main_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	carousel_layer.add_child(main_vbox)
-	
+
 	# Title
 	var title := Label.new()
 	title.text = "COLORED TIME"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 42)
+	title.add_theme_font_size_override("font_size", 44)
 	title.modulate = Color(0.3, 0.85, 1.0)
 	main_vbox.add_child(title)
-	
+
 	var subtitle := Label.new()
 	subtitle.text = "3D Audio-Reactive Jazz Match-3 Grid"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.modulate = Color(0.7, 0.75, 0.85)
 	main_vbox.add_child(subtitle)
-	
-	main_vbox.add_spacer(false)
-	
+
 	# Carousel Center Card
 	var card_panel := Panel.new()
-	card_panel.custom_minimum_size = Vector2(620, 260)
+	card_panel.custom_minimum_size = Vector2(660, 250)
 	card_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	var csb := StyleBoxFlat.new()
-	csb.bg_color = Color(0.05, 0.04, 0.1, 0.85)
+	csb.bg_color = Color(0.05, 0.04, 0.1, 0.90)
 	csb.set_corner_radius_all(16)
 	csb.border_width_left = 2
 	csb.border_width_top = 2
@@ -204,74 +204,79 @@ func _build_carousel_overlay() -> void:
 	csb.border_color = Color(0.3, 0.7, 1.0, 0.6)
 	card_panel.add_theme_stylebox_override("panel", csb)
 	main_vbox.add_child(card_panel)
-	
+
 	var card_vbox := VBoxContainer.new()
 	card_vbox.set_anchors_preset(PRESET_FULL_RECT)
-	card_vbox.offset_left = 24
-	card_vbox.offset_right = -24
-	card_vbox.offset_top = 20
-	card_vbox.offset_bottom = -20
+	card_vbox.offset_left = 28
+	card_vbox.offset_right = -28
+	card_vbox.offset_top = 18
+	card_vbox.offset_bottom = -18
+	card_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	card_vbox.add_theme_constant_override("separation", 14)
 	card_panel.add_child(card_vbox)
-	
+
 	# Nav row
 	var nav_row := HBoxContainer.new()
+	nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var prev_btn := Button.new()
 	prev_btn.text = " ◀ Previous "
+	prev_btn.custom_minimum_size = Vector2(110, 36)
 	prev_btn.pressed.connect(_on_prev_track)
 	nav_row.add_child(prev_btn)
-	
+
 	carousel_track_label = Label.new()
 	carousel_track_label.text = "Track 01: Bird Blues"
 	carousel_track_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	carousel_track_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	carousel_track_label.add_theme_font_size_override("font_size", 24)
+	carousel_track_label.add_theme_font_size_override("font_size", 22)
 	nav_row.add_child(carousel_track_label)
-	
+
 	var next_btn := Button.new()
 	next_btn.text = " Next ▶ "
+	next_btn.custom_minimum_size = Vector2(110, 36)
 	next_btn.pressed.connect(_on_next_track)
 	nav_row.add_child(next_btn)
 	card_vbox.add_child(nav_row)
-	
+
 	carousel_style_label = Label.new()
 	carousel_style_label.text = "Style: Bebop Prism Tunnel | Key: F | 140 BPM"
 	carousel_style_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	carousel_style_label.modulate = Color(0.4, 0.9, 1.0)
 	card_vbox.add_child(carousel_style_label)
-	
+
 	carousel_stats_label = Label.new()
 	carousel_stats_label.text = "Rating: ☆☆☆ | High Score: 0 | Max Cascade: 0x"
 	carousel_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	carousel_stats_label.modulate = Color(1.0, 0.85, 0.3)
 	card_vbox.add_child(carousel_stats_label)
-	
+
 	# Mode Launch Buttons
 	var btn_row := HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_row.custom_minimum_size = Vector2(0, 50)
-	
+	btn_row.add_theme_constant_override("separation", 24)
+
 	var play_campaign_btn := Button.new()
 	play_campaign_btn.text = " ▶ PLAY CAMPAIGN "
-	play_campaign_btn.custom_minimum_size = Vector2(200, 46)
+	play_campaign_btn.custom_minimum_size = Vector2(210, 46)
 	play_campaign_btn.pressed.connect(func():
 		play_campaign_requested.emit(current_preview_id)
 	)
 	btn_row.add_child(play_campaign_btn)
-	
+
 	var play_endless_btn := Button.new()
 	play_endless_btn.text = " ♾ ENDLESS / ZEN MODE "
-	play_endless_btn.custom_minimum_size = Vector2(220, 46)
+	play_endless_btn.custom_minimum_size = Vector2(230, 46)
 	play_endless_btn.pressed.connect(func():
 		play_endless_requested.emit()
 	)
 	btn_row.add_child(play_endless_btn)
-	
-	card_vbox.add_spacer(false)
+
 	card_vbox.add_child(btn_row)
 
 func _build_modal_layer() -> void:
 	modal_layer = Control.new()
 	modal_layer.set_anchors_preset(PRESET_FULL_RECT)
+	modal_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	modal_layer.visible = false
 	add_child(modal_layer)
 	

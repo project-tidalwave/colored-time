@@ -129,37 +129,53 @@ func _create_ice_node(grid_pos: Vector2i, hp: int) -> ColorRect:
 	return rect
 
 func _gui_input(event: InputEvent) -> void:
-	if is_animating:
+	if not visible or is_animating:
 		return
-	
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var local_pos: Vector2 = event.position
 		var gx := int(local_pos.x / CELL_SIZE)
 		var gy := int(local_pos.y / CELL_SIZE)
-		if gx < 0 or gx >= BoardLogic.WIDTH or gy < 0 or gy >= BoardLogic.HEIGHT:
-			return
-		
-		var clicked := Vector2i(gx, gy)
-		if not gem_nodes.has(clicked):
-			selected_cell = Vector2i(-1, -1)
-			_update_selection_visuals()
-			return
-		
-		if selected_cell == Vector2i(-1, -1):
-			# First selection
-			selected_cell = clicked
-			_update_selection_visuals()
-		elif selected_cell == clicked:
-			# Deselect
-			selected_cell = Vector2i(-1, -1)
-			_update_selection_visuals()
-		else:
-			# Attempt swap
-			var p1 := selected_cell
-			var p2 := clicked
-			selected_cell = Vector2i(-1, -1)
-			_update_selection_visuals()
-			swap_requested.emit(p1, p2)
+		_handle_cell_click(Vector2i(gx, gy))
+		accept_event()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or is_animating:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		var rect := Rect2(global_position, size)
+		if rect.has_point(event.global_position):
+			var local_pos: Vector2 = event.global_position - global_position
+			var gx := int(local_pos.x / CELL_SIZE)
+			var gy := int(local_pos.y / CELL_SIZE)
+			_handle_cell_click(Vector2i(gx, gy))
+			var vp := get_viewport()
+			if vp:
+				vp.set_input_as_handled()
+
+func _handle_cell_click(clicked: Vector2i) -> void:
+	if clicked.x < 0 or clicked.x >= BoardLogic.WIDTH or clicked.y < 0 or clicked.y >= BoardLogic.HEIGHT:
+		return
+	
+	if not gem_nodes.has(clicked):
+		selected_cell = Vector2i(-1, -1)
+		_update_selection_visuals()
+		return
+	
+	if selected_cell == Vector2i(-1, -1):
+		# First selection
+		selected_cell = clicked
+		_update_selection_visuals()
+	elif selected_cell == clicked:
+		# Deselect
+		selected_cell = Vector2i(-1, -1)
+		_update_selection_visuals()
+	else:
+		# Attempt swap
+		var p1 := selected_cell
+		var p2 := clicked
+		selected_cell = Vector2i(-1, -1)
+		_update_selection_visuals()
+		swap_requested.emit(p1, p2)
 
 func _update_selection_visuals() -> void:
 	for pos in gem_nodes.keys():
