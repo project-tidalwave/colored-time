@@ -1,0 +1,87 @@
+# ==============================================================================
+# GAME SPECIFICATION INPUT
+# ==============================================================================
+GAME_TITLE: "Colored Time"
+GENRE_ARCHETYPE: "Match-3 Puzzle / Audio-Reactive Rhythm Grid (Bejeweled Clone)"
+CAMERA_PERSPECTIVE: "2D Match-3 Board Overlay (CanvasLayer/Control) over a 3D Audio-Reactive Procedural Background Viewport (Perspective Camera3D, FOV 70-75)"
+TARGET_ENGINE: "Godot 4.3+ / 4.7+ (Forward+ Renderer, AudioEffectSpectrumAnalyzer, WorldEnvironment Glow/Bloom)"
+
+CORE_GAMEPLAY_LOOP: >
+  The player swaps adjacent colored gems on an 8x8 grid to form horizontal or vertical
+  chains of 3 or more matching gems while a jazz/blues soundtrack from res://tracks/ drives
+  both the level rules and a reactive 3D procedural geometry background. Matched gems shatter
+  with beat-synced particles, triggering gravity cascades, spawning special power gems
+  (Flame Gems, Star Gems, and Hypercubes), clearing frosted blocker tiles, and charging the
+  level's Chrono Gauge. Swapping gems on the musical beat grants an On-Beat Rhythm multiplier
+  and sends shockwaves through the 3D background geometry. In Campaign Mode, the player must
+  fill the Chrono Gauge (reach the target score and clear board objectives) before the current
+  soundtrack ends; in Endless/Zen Mode, play continues indefinitely across shuffling tracks.
+
+KEY_MECHANICS:
+  - "Grid & Swapping: 8x8 Match-3 grid with 6-7 distinct gem colors/geometric shapes; click-and-drag or click-to-select adjacent orthogonal swaps (invalid swaps animate and snap back)"
+  - "Match & Cascade Resolution: 3+ orthogonal matches clear gems; remaining gems fall via smooth tweened gravity while new gems spawn from the top, triggering chain cascades"
+  - "Special Power Gems: Flame Gem (4-in-a-row, 3x3 blast), Star Gem (T/L-shape 5-gem intersection, row/column laser clear), Hypercube / Chrono Prism (5-in-a-row straight line, clears all gems of swapped color)"
+  - "Procedural Board Modifiers: Deterministic per-track board masks (sculpted corner cutouts, channels) and multi-layer Chrono Ice / locked tiles that shatter when matched or blasted"
+  - "Rhythm & Beat Sync: Beat interval computed from track filename BPM (60.0 / BPM seconds); matches made on-beat award 1.5x score bonus, combo sustain, and pulse the 3D background"
+  - "Board Assist & Fail-Safes: Automatic valid-move detector; highlights a hint after 5 seconds of inactivity and automatically reshuffles grid if zero valid swaps remain"
+  - "Game Modes: 36-Level Track Campaign (win by filling Chrono Gauge before track ends) and Endless / Zen Mode (no fail state, infinite progression cycling 36 tracks)"
+
+TRACKS_AND_PROCEDURAL_GENERATION:
+  track_directory: "res://tracks/"
+  track_count: 36
+  filename_metadata_schema: "track_<id>_<style>_<key>_<bpm>bpm.mp3"
+  metadata_fields:
+    id: "Level number (01 to 36) determining campaign progression and baseline difficulty curve"
+    style_archetypes:
+      bird_blues: "Tracks 01-06 (135-160 BPM): Angular bebop prism tunnel, 6 gem colors, light Chrono Ice edges"
+      medium_swing: "Tracks 07-12 (118-130 BPM): Concentric swinging gyro-rings & ribbons, 6 gem colors, symmetric corner cutouts"
+      slow_ballad: "Tracks 13-18 (72-84 BPM): Floating crystalline monoliths & harmonic sine waves, 6 gem colors, relaxed beat window, deep cascade focus"
+      minor_blues: "Tracks 19-24 (120-138 BPM): Tessellated fractal pillars & hexagonal lattices, 7 gem colors, multi-layer Chrono Ice tiles"
+      burning_swing: "Tracks 25-30 (185-210 BPM): High-speed kinetic wireframe vortex & spiral polyhedra, 7 gem colors, fast beat pulses, high target score"
+      spiced_blues: "Tracks 31-36 (130-152 BPM): Chromatic torus knots & kaleidoscopic mandala shards, 7 gem colors, complex asymmetric board masks & ice locks"
+    key: "Musical key (c, db, d, eb, e, f, gb, g, ab, a, bb, b) mapped to a 12-tone color wheel to set the level primary background palette and ambient lighting hue"
+    bpm: "Beats per minute (72 to 210 BPM) controlling beat-sync timing windows, background rotation/travel velocity, and gem idle pulse cadence"
+  real_time_audio_spectrum_analysis:
+    bus_setup: "Master -> Music bus equipped with AudioEffectSpectrumAnalyzer"
+    bass_band_hz: "20-250 Hz: Drives central 3D geometry scale, vertex displacement, and camera FOV kick"
+    mid_band_hz: "250-2000 Hz: Modulates procedural mesh rotation speed, ribbon twist, and emissive shader energy"
+    treble_band_hz: "2000-16000 Hz: Triggers high-frequency sparkle particles, wireframe rim highlights, and grid border shimmer"
+
+SCORING_AND_HIGH_SCORES:
+  - "Base Match Points: 3-gem match (+100 pts), 4-gem match (+250 pts + Flame Gem), 5-gem L/T match (+500 pts + Star Gem), 5-gem line match (+1000 pts + Hypercube)"
+  - "Special Gem Detonations: Flame Gem blast (+400 pts), Star Gem row/col clear (+600 pts), Hypercube color wipe (+1500 pts)"
+  - "Cascade & Rhythm Multipliers: Consecutive gravity cascades scale chain multiplier (1x, 2x, 3x, 4x...); matching on-beat (+/- 120ms) grants 1.5x Rhythm Multiplier and +5% Chrono Gauge boost; clearing Chrono Ice awards +300 pts"
+  - "Star Rating & Progression: 1 to 3 Stars awarded per track level based on final score thresholds when Chrono Gauge completes or track ends"
+  - "Persistence: Save unlocked levels, per-track high scores, star ratings (1-3), max cascade chain, best on-beat streak, and audio volume settings in user://game_save.json"
+
+AUDIO_AND_VISUAL_THEME:
+  aesthetic: "Synesthetic Jazz-Geometry / Luminescent Jewel Box (Crisp semi-translucent 2D glass board frame over a glowing, hypnotic 3D procedural geometry stage with ACES tonemapping and bloom)"
+  gem_visual_hierarchy:
+    ruby_crimson:
+      color: "#FF1E56"
+      cut: "Octahedron / Diamond"
+    amber_gold:
+      color: "#FFB800"
+      cut: "Hexagon / Honeycomb"
+    emerald_mint:
+      color: "#00F5A0"
+      cut: "Square / Cushion"
+    sapphire_cyan:
+      color: "#00D2FF"
+      cut: "Triangle / Trillion"
+    amethyst_violet:
+      color: "#A855F7"
+      cut: "Circle / Cabochon"
+    pearl_white:
+      color: "#F8FAFC"
+      cut: "Six-Point Star / Radiant"
+    obsidian_chrome:
+      color: "#38BDF8"
+      cut: "Teardrop / Briolette (7th high-difficulty gem for advanced styles)"
+  visual_feedback:
+    board_blockers: "Frosted translucent cyan-white overlays with crack shaders and dark geometric cages"
+    special_gems_and_combos: "Pulsing outer aura rings, directional laser flares (Star Gem), fiery particle embers (Flame Gem), and rotating prismatic arcs (Hypercube)"
+  audio_design:
+    soundtrack_playback: "Streams the level assigned MP3 from res://tracks/ with seamless spectrum analyzer tap"
+    procedural_sfx: "Harmonic pitched chime synthesizer for gem matches (pitch ascends up the track musical scale with each cascade step), crisp glass shatter on ice break, deep sub-drop on Hypercube detonation"
+# ==============================================================================
