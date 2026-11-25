@@ -377,14 +377,27 @@ func test_pause_menu_and_cursor_ux() -> bool:
 		if btn.mouse_default_cursor_shape != Control.CURSOR_POINTING_HAND:
 			printerr("FAIL: Button '", btn.text, "' does not have CURSOR_POINTING_HAND")
 			return false
-	print("  ✓ All ", all_buttons.size(), " buttons have CURSOR_POINTING_HAND set.")
+		# Verify no buttons contain icon prefixes
+		for icon_sym in ["⏸", "◀", "▶", "♾", "↺", "☰"]:
+			if icon_sym in btn.text:
+				printerr("FAIL: Button '", btn.text, "' still contains icon '", icon_sym, "'")
+				return false
+	print("  ✓ All ", all_buttons.size(), " buttons have CURSOR_POINTING_HAND set and no icon prefixes.")
 	
-	# 2. Check modal center container & panel centering
+	# 2. Check modal center container & panel centering & compact sizing
 	var center_containers := hud.modal_layer.find_children("*", "CenterContainer", true, false)
 	if center_containers.is_empty():
 		printerr("FAIL: modal_layer does not contain a CenterContainer")
 		return false
-	print("  ✓ Modal layer uses CenterContainer for screen centering.")
+	var panels := hud.modal_layer.find_children("*", "Panel", true, false)
+	if panels.is_empty():
+		printerr("FAIL: modal_layer does not contain a Panel")
+		return false
+	var modal_panel: Panel = panels[0]
+	if modal_panel.custom_minimum_size.y > 280:
+		printerr("FAIL: modal panel has too much vertical space: ", modal_panel.custom_minimum_size.y)
+		return false
+	print("  ✓ Modal layer uses CenterContainer and compact panel height (", modal_panel.custom_minimum_size.y, "px).")
 	
 	# 3. Check vertical button stack in modal
 	var modal_btn_containers := hud.modal_layer.find_children("*", "VBoxContainer", true, false)
@@ -395,8 +408,8 @@ func test_pause_menu_and_cursor_ux() -> bool:
 			found_button_vbox = true
 			for b in btns_in_v:
 				var btn: Button = b
-				if btn.custom_minimum_size.x != 220:
-					printerr("FAIL: Modal button '", btn.text, "' width is not 220, got: ", btn.custom_minimum_size.x)
+				if btn.custom_minimum_size.x != 200:
+					printerr("FAIL: Modal button '", btn.text, "' width is not 200, got: ", btn.custom_minimum_size.x)
 					return false
 	if not found_button_vbox:
 		printerr("FAIL: Modal buttons are not stacked in a VBoxContainer")

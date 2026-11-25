@@ -151,7 +151,7 @@ func _build_ingame_hud() -> void:
 
 	# Pause button
 	var pause_btn := Button.new()
-	pause_btn.text = " ⏸ Pause "
+	pause_btn.text = "Pause"
 	pause_btn.position = Vector2(20, 105)
 	pause_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	pause_btn.pressed.connect(func(): pause_toggled.emit())
@@ -221,7 +221,7 @@ func _build_carousel_overlay() -> void:
 	var nav_row := HBoxContainer.new()
 	nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var prev_btn := Button.new()
-	prev_btn.text = " ◀ Previous "
+	prev_btn.text = "Previous"
 	prev_btn.custom_minimum_size = Vector2(110, 36)
 	prev_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	prev_btn.pressed.connect(_on_prev_track)
@@ -235,7 +235,7 @@ func _build_carousel_overlay() -> void:
 	nav_row.add_child(carousel_track_label)
 
 	var next_btn := Button.new()
-	next_btn.text = " Next ▶ "
+	next_btn.text = "Next"
 	next_btn.custom_minimum_size = Vector2(110, 36)
 	next_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	next_btn.pressed.connect(_on_next_track)
@@ -260,7 +260,7 @@ func _build_carousel_overlay() -> void:
 	btn_row.add_theme_constant_override("separation", 24)
 
 	var play_campaign_btn := Button.new()
-	play_campaign_btn.text = " ▶ PLAY CAMPAIGN "
+	play_campaign_btn.text = "Play Campaign"
 	play_campaign_btn.custom_minimum_size = Vector2(210, 46)
 	play_campaign_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	play_campaign_btn.pressed.connect(func():
@@ -269,7 +269,7 @@ func _build_carousel_overlay() -> void:
 	btn_row.add_child(play_campaign_btn)
 
 	var play_endless_btn := Button.new()
-	play_endless_btn.text = " ♾ ENDLESS / ZEN MODE "
+	play_endless_btn.text = "Endless / Zen Mode"
 	play_endless_btn.custom_minimum_size = Vector2(230, 46)
 	play_endless_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	play_endless_btn.pressed.connect(func():
@@ -297,7 +297,7 @@ func _build_modal_layer() -> void:
 	modal_layer.add_child(center_container)
 	
 	var panel := Panel.new()
-	panel.custom_minimum_size = Vector2(480, 360)
+	panel.custom_minimum_size = Vector2(400, 270)
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.06, 0.05, 0.12, 0.95)
 	sb.set_corner_radius_all(14)
@@ -311,11 +311,12 @@ func _build_modal_layer() -> void:
 	
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_preset(PRESET_FULL_RECT)
-	vbox.offset_left = 30
-	vbox.offset_right = -30
-	vbox.offset_top = 24
-	vbox.offset_bottom = -24
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.offset_left = 28
+	vbox.offset_right = -28
+	vbox.offset_top = 20
+	vbox.offset_bottom = -20
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 12)
 	panel.add_child(vbox)
 	
 	modal_title = Label.new()
@@ -330,39 +331,37 @@ func _build_modal_layer() -> void:
 	modal_details.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(modal_details)
 	
-	vbox.add_spacer(false)
-	
 	var btn_vbox := VBoxContainer.new()
 	btn_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	btn_vbox.add_theme_constant_override("separation", 10)
+	btn_vbox.add_theme_constant_override("separation", 8)
 	
 	modal_resume_btn = Button.new()
-	modal_resume_btn.text = " ▶ Resume "
-	modal_resume_btn.custom_minimum_size = Vector2(220, 42)
+	modal_resume_btn.text = "Resume"
+	modal_resume_btn.custom_minimum_size = Vector2(200, 38)
 	modal_resume_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	modal_resume_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	modal_resume_btn.pressed.connect(func(): pause_toggled.emit())
 	btn_vbox.add_child(modal_resume_btn)
 	
 	modal_next_btn = Button.new()
-	modal_next_btn.text = " Next Level ▶ "
-	modal_next_btn.custom_minimum_size = Vector2(220, 42)
+	modal_next_btn.text = "Next Level"
+	modal_next_btn.custom_minimum_size = Vector2(200, 38)
 	modal_next_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	modal_next_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	modal_next_btn.pressed.connect(func(): next_level_requested.emit())
 	btn_vbox.add_child(modal_next_btn)
 	
 	var replay_btn := Button.new()
-	replay_btn.text = " ↺ Replay "
-	replay_btn.custom_minimum_size = Vector2(220, 42)
+	replay_btn.text = "Replay"
+	replay_btn.custom_minimum_size = Vector2(200, 38)
 	replay_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	replay_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	replay_btn.pressed.connect(func(): replay_requested.emit())
 	btn_vbox.add_child(replay_btn)
 	
 	var menu_btn := Button.new()
-	menu_btn.text = " ☰ Main Menu "
-	menu_btn.custom_minimum_size = Vector2(220, 42)
+	menu_btn.text = "Main Menu"
+	menu_btn.custom_minimum_size = Vector2(200, 38)
 	menu_btn.size_flags_horizontal = SIZE_SHRINK_CENTER
 	menu_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	menu_btn.pressed.connect(func(): return_to_carousel_requested.emit())
