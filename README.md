@@ -288,7 +288,9 @@ Tiles locked by Chrono Ice feature dynamic crack propagation and frosted refract
 Audio spectrum analysis runs continuously on the dedicated `Music` audio bus via Godot's `AudioEffectSpectrumAnalyzerInstance`:
 - **Buffer Length**: $100\text{ ms}$ ($0.1\text{ s}$)
 - **FFT Size**: $2048$ bins
-- **Smoothing**: Raw FFT magnitudes are smoothed using frame-independent exponential damping ($\lambda = 20.0$): $\text{Mag}_{\text{smoothed}} = \text{lerp}\left(\text{Mag}_{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right)$
+- **Smoothing**: Raw FFT magnitudes are smoothed using frame-independent exponential damping ($\lambda = 20.0$): 
+
+$$\text{Mag}{\text{smoothed}} = \text{lerp}\left(\text{Mag}{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right)$$
 
 #### Algorithmic Chime Waveform Synthesis
 Sound effects are synthesized **in memory at runtime** into 44.1 kHz, 16-bit PCM mono `AudioStreamWAV` buffers with zero reliance on static audio sample files:
