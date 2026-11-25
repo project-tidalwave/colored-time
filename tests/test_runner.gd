@@ -333,6 +333,29 @@ func test_ui_interaction() -> bool:
 		return false
 	print("  ✓ All carousel buttons strictly inside 1280x800 viewport boundaries.")
 
+	# Verify that across all 36 tracks, Previous and Next buttons never stick out of card_panel
+	var card_panel: Panel = hud.carousel_layer.find_child("CarouselCardPanel", true, false)
+	var nav_row: HBoxContainer
+	for h in hud.carousel_layer.find_children("*", "HBoxContainer", true, false):
+		if h.find_child("Previous", true, false):
+			nav_row = h
+			break
+	if not nav_row:
+		for b in buttons_found:
+			if b.text == "Previous":
+				nav_row = b.get_parent() as HBoxContainer
+				break
+	
+	if card_panel and nav_row:
+		for track_id in range(1, 37):
+			hud.update_carousel_preview(track_id)
+			var nav_min_w: float = nav_row.get_combined_minimum_size().x
+			var max_allowed_w: float = card_panel.custom_minimum_size.x - 64.0 # 32px left/right margins
+			if nav_min_w > max_allowed_w:
+				printerr("FAIL: Nav row minimum width (", nav_min_w, ") exceeds card interior (", max_allowed_w, ") on track ", track_id)
+				return false
+		print("  ✓ Verified all 36 tracks: Nav row fits strictly inside card panel with generous margins.")
+
 	# 3. Test Back button / ESC from carousel -> Home
 	var esc_event := InputEventKey.new()
 	esc_event.pressed = true

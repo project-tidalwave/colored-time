@@ -298,7 +298,8 @@ func _build_carousel_overlay() -> void:
 
 	# Carousel Center Card
 	var card_panel := Panel.new()
-	card_panel.custom_minimum_size = Vector2(660, 250)
+	card_panel.name = "CarouselCardPanel"
+	card_panel.custom_minimum_size = Vector2(840, 260)
 	card_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	var csb := StyleBoxFlat.new()
 	csb.bg_color = Color(0.05, 0.04, 0.1, 0.90)
@@ -313,10 +314,10 @@ func _build_carousel_overlay() -> void:
 
 	var card_vbox := VBoxContainer.new()
 	card_vbox.set_anchors_preset(PRESET_FULL_RECT)
-	card_vbox.offset_left = 28
-	card_vbox.offset_right = -28
-	card_vbox.offset_top = 18
-	card_vbox.offset_bottom = -18
+	card_vbox.offset_left = 32
+	card_vbox.offset_right = -32
+	card_vbox.offset_top = 20
+	card_vbox.offset_bottom = -20
 	card_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	card_vbox.add_theme_constant_override("separation", 14)
 	card_panel.add_child(card_vbox)
@@ -324,6 +325,8 @@ func _build_carousel_overlay() -> void:
 	# Nav row
 	var nav_row := HBoxContainer.new()
 	nav_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	nav_row.size_flags_horizontal = SIZE_EXPAND_FILL
+	nav_row.add_theme_constant_override("separation", 16)
 	var prev_btn := Button.new()
 	prev_btn.text = "Previous"
 	prev_btn.custom_minimum_size = Vector2(110, 36)
