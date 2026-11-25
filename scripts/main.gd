@@ -38,6 +38,7 @@ var on_beat_matches: int = 0
 var total_matches: int = 0
 var level_cleared: bool = false
 var is_resolving_turn: bool = false
+var is_paused: bool = false
 
 func _init() -> void:
 	name = "Main"
@@ -47,8 +48,9 @@ func _ready() -> void:
 	_setup_ui()
 	_connect_signals()
 	
-	# Start in carousel preview mode
-	hud.show_carousel()
+	# Start on Home Screen and play a random track with visualizer active
+	hud.show_home()
+	_play_random_menu_track()
 
 func _setup_core_nodes() -> void:
 	# 3D Background
@@ -82,6 +84,11 @@ func _setup_ui() -> void:
 	canvas_layer.add_child(hud)
 
 func _connect_signals() -> void:
+	hud.new_game_requested.connect(_on_new_game)
+	hud.high_scores_requested.connect(_on_high_scores)
+	hud.exit_requested.connect(_on_exit_requested)
+	hud.back_to_home_requested.connect(_on_back_to_home)
+	
 	hud.play_campaign_requested.connect(_on_play_campaign)
 	hud.play_endless_requested.connect(_on_play_endless)
 	hud.track_selected_for_preview.connect(_on_track_preview)
@@ -92,6 +99,35 @@ func _connect_signals() -> void:
 	
 	board_view.swap_requested.connect(_on_board_swap_requested)
 	audio_manager.track_finished.connect(_on_track_finished)
+
+func _on_new_game() -> void:
+	hud.show_carousel()
+
+func _on_high_scores() -> void:
+	hud.show_high_scores()
+	if not audio_manager.is_playing:
+		_play_random_menu_track()
+
+func _on_exit_requested() -> void:
+	get_tree().quit()
+
+func _on_back_to_home() -> void:
+	hud.show_home()
+	if not audio_manager.is_playing:
+		_play_random_menu_track()
+
+func _play_random_menu_track() -> void:
+	var random_id: int = (randi() % 36) + 1
+	var t := TrackCatalog.get_track_by_id(random_id)
+	if t.is_empty():
+		return
+	current_track_id = random_id
+	current_track_data = t
+	bg_3d.set_track_style(t["style"], t["key_hue"])
+	sfx.set_track_tuning(t["root_freq"], t["style"])
+	var stream := load(t["file_path"]) as AudioStream
+	if stream:
+		audio_manager.play_track(stream, float(t["bpm"]))
 
 func _on_track_preview(track_id: int) -> void:
 	current_track_id = track_id
@@ -133,6 +169,7 @@ func _start_level(track_id: int) -> void:
 	total_matches = 0
 	level_cleared = false
 	is_resolving_turn = false
+	is_paused = false
 	
 	# Configure Audio & Visuals
 	bg_3d.set_track_style(t["style"], t["key_hue"])
@@ -149,7 +186,7 @@ func _start_level(track_id: int) -> void:
 	hud.show_gameplay()
 
 func _on_board_swap_requested(p1: Vector2i, p2: Vector2i) -> void:
-	if is_resolving_turn or level_cleared:
+	if is_paused or is_resolving_turn or level_cleared:
 		return
 	
 	var is_beat := audio_manager.is_on_beat(0.120)
@@ -337,28 +374,53 @@ func _on_track_finished() -> void:
 	elif current_mode == GameMode.ENDLESS:
 		# In endless, loop/cycle to next track seamlessly
 		_advance_endless_track()
+	elif current_mode == GameMode.NONE:
+		# In menu screens, loop / pick next random ambient track
+		_play_random_menu_track()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			if current_mode != GameMode.NONE and not level_cleared and board_view and board_view.visible:
+				_on_pause_toggled()
+				var vp := get_viewport()
+				if vp:
+					vp.set_input_as_handled()
+			elif hud.carousel_layer.visible or hud.high_scores_layer.visible:
+				_on_back_to_home()
+				var vp := get_viewport()
+				if vp:
+					vp.set_input_as_handled()
 
 func _on_pause_toggled() -> void:
-	if audio_manager.is_playing:
-		audio_manager.pause_track()
-		hud.show_results_modal("PAUSED", "Current Score: %d" % score, false)
-	else:
+	if current_mode == GameMode.NONE or level_cleared or not board_view or not board_view.visible:
+		return
+	if is_paused:
+		is_paused = false
 		audio_manager.resume_track()
 		hud.hide_modal()
+	else:
+		is_paused = true
+		audio_manager.pause_track()
+		hud.show_results_modal("PAUSED", "Current Score: %d" % score, false, true)
 
 func _on_next_level() -> void:
+	is_paused = false
 	var next_id := (current_track_id % 36) + 1
 	hud.hide_modal()
 	_start_level(next_id)
 
 func _on_replay_level() -> void:
+	is_paused = false
 	hud.hide_modal()
 	_start_level(current_track_id)
 
 func _on_return_to_carousel() -> void:
+	is_paused = false
 	board_view.visible = false
 	current_mode = GameMode.NONE
-	hud.show_carousel()
+	hud.show_home()
+	_play_random_menu_track()
 
 func _process(delta: float) -> void:
 	var bass := audio_manager.bass_magnitude

@@ -23,6 +23,7 @@ func _init() -> void:
 	all_passed = test_procedural_background_3d() and all_passed
 	all_passed = test_main_scene_instantiation() and all_passed
 	all_passed = test_ui_interaction() and all_passed
+	all_passed = test_pause_menu_and_cursor_ux() and all_passed
 	
 	if all_passed:
 		print("\n>>> ALL TESTS PASSED SUCCESSFULLY! <<<")
@@ -275,7 +276,7 @@ func test_main_scene_instantiation() -> bool:
 	return true
 
 func test_ui_interaction() -> bool:
-	print("\n[TEST 7] UI Interaction & Screen Boundaries...")
+	print("\n[TEST 7] UI Interaction, Home Screen & Navigation Flow...")
 	root.size = Vector2i(1280, 800)
 	var main_scene := load("res://scenes/Main.tscn") as PackedScene
 	var main_node = main_scene.instantiate()
@@ -285,6 +286,36 @@ func test_ui_interaction() -> bool:
 	
 	var hud: ArcadeHUD = main_node.hud
 	var board_view: BoardView = main_node.board_view
+	
+	# 1. Verify Home Screen is initially visible and random track audio is playing
+	if not hud.home_layer.visible:
+		printerr("FAIL: Home layer is not visible on boot")
+		return false
+	if not main_node.audio_manager.is_playing:
+		printerr("FAIL: Audio is not playing on Home Screen")
+		return false
+	print("  ✓ Random track audio is playing on Home Screen with active visualizer.")
+	
+	var home_buttons: Array[Button] = []
+	for b in hud.find_children("*", "Button", true, false):
+		if hud.home_layer.is_ancestor_of(b):
+			home_buttons.append(b)
+			var r: Rect2 = b.get_global_rect()
+			print("Home Button: '", b.text, "' rect: ", r)
+			if r.position.y < 0 or r.end.y > 800 or r.position.x < 0 or r.end.x > 1280:
+				printerr("FAIL: Home Button off-screen: '", b.text, "' rect: ", r)
+				return false
+	
+	if home_buttons.size() != 3:
+		printerr("FAIL: Expected 3 home buttons (New Game, High Scores, Exit), found: ", home_buttons.size())
+		return false
+	print("  ✓ All 3 home screen buttons verified inside 1280x800 viewport.")
+
+	# 2. Test New Game button -> Carousel
+	main_node._on_new_game()
+	if not hud.carousel_layer.visible or hud.home_layer.visible:
+		printerr("FAIL: _on_new_game did not switch from home to carousel")
+		return false
 	
 	# Verify Carousel buttons are fully within the 1280x800 viewport
 	var buttons_found: Array[Button] = []
@@ -298,16 +329,79 @@ func test_ui_interaction() -> bool:
 				return false
 	
 	if buttons_found.size() < 4:
-		printerr("FAIL: Expected 4 carousel buttons, found ", buttons_found.size())
+		printerr("FAIL: Expected at least 4 carousel buttons, found ", buttons_found.size())
 		return false
-	
-	if buttons_found.size() < 4:
-		printerr("FAIL: Expected at least 4 visible carousel buttons, found ", buttons_found.size())
-		return false
-	
 	print("  ✓ All carousel buttons strictly inside 1280x800 viewport boundaries.")
+
+	# Verify that across all 36 tracks, Previous and Next buttons never stick out of card_panel
+	var card_panel: Panel = hud.carousel_layer.find_child("CarouselCardPanel", true, false)
+	var nav_row: HBoxContainer
+	for h in hud.carousel_layer.find_children("*", "HBoxContainer", true, false):
+		if h.find_child("Previous", true, false):
+			nav_row = h
+			break
+	if not nav_row:
+		for b in buttons_found:
+			if b.text == "Previous":
+				nav_row = b.get_parent() as HBoxContainer
+				break
 	
-	# Launch campaign
+	if card_panel and nav_row:
+		for track_id in range(1, 37):
+			hud.update_carousel_preview(track_id)
+			var nav_min_w: float = nav_row.get_combined_minimum_size().x
+			var max_allowed_w: float = card_panel.custom_minimum_size.x - 64.0 # 32px left/right margins
+			if nav_min_w > max_allowed_w:
+				printerr("FAIL: Nav row minimum width (", nav_min_w, ") exceeds card interior (", max_allowed_w, ") on track ", track_id)
+				return false
+		print("  ✓ Verified all 36 tracks: Nav row fits strictly inside card panel with generous margins.")
+
+	# 3. Test Back button / ESC from carousel -> Home
+	var esc_event := InputEventKey.new()
+	esc_event.pressed = true
+	esc_event.keycode = KEY_ESCAPE
+	main_node._unhandled_input(esc_event)
+	if not hud.home_layer.visible or hud.carousel_layer.visible:
+		printerr("FAIL: ESC did not return from carousel to home layer")
+		return false
+	print("  ✓ ESC key returns from Carousel to Home Screen.")
+
+	# 4. Test High Scores screen & 36 tracks leaderboard
+	main_node._on_high_scores()
+	if not hud.high_scores_layer.visible or hud.home_layer.visible:
+		printerr("FAIL: _on_high_scores did not show high_scores_layer")
+		return false
+	
+	var list_vbox: VBoxContainer = hud.high_scores_layer.find_child("TrackListVBox", true, false)
+	if not list_vbox:
+		printerr("FAIL: TrackListVBox not found in high scores layer")
+		return false
+	var track_rows: Array[Node] = list_vbox.find_children("*", "PanelContainer", false, false)
+	if track_rows.size() != 36:
+		printerr("FAIL: Expected 36 track rows in high scores leaderboard, found: ", track_rows.size())
+		return false
+	
+	# Verify audio is playing on High Scores screen
+	if not main_node.audio_manager.is_playing:
+		printerr("FAIL: Audio is not playing on High Scores screen")
+		return false
+	
+	# Verify right-hand padding for scrollbar breathing room
+	var first_row_sb: StyleBox = (track_rows[0] as PanelContainer).get_theme_stylebox("panel")
+	if first_row_sb is StyleBoxFlat and (first_row_sb as StyleBoxFlat).content_margin_right < 24:
+		printerr("FAIL: High Scores row does not have sufficient right padding: ", (first_row_sb as StyleBoxFlat).content_margin_right)
+		return false
+	print("  ✓ High Scores screen verified with all 36 tracks, audio playback, and right-hand scroll padding.")
+
+	# Test ESC from High Scores -> Home
+	main_node._unhandled_input(esc_event)
+	if not hud.home_layer.visible or hud.high_scores_layer.visible:
+		printerr("FAIL: ESC did not return from high scores to home layer")
+		return false
+	print("  ✓ ESC key returns from High Scores to Home Screen.")
+	
+	# 5. Launch campaign and verify gameplay
+	main_node._on_new_game()
 	main_node._on_play_campaign(1)
 	
 	# Test BoardView unhandled input cell click
@@ -353,5 +447,124 @@ func test_ui_interaction() -> bool:
 		return false
 	
 	print("  ✓ BoardView adjacent cell swap request verified.")
+	main_node.queue_free()
+	return true
+
+func test_pause_menu_and_cursor_ux() -> bool:
+	print("\n[TEST 8] Pause Menu Centering, Vertical Buttons, ESC key & Cursor Pointer...")
+	root.size = Vector2i(1280, 800)
+	var main_scene := load("res://scenes/Main.tscn") as PackedScene
+	var main_node = main_scene.instantiate()
+	root.add_child(main_node)
+	if not main_node.bg_3d:
+		main_node._ready()
+	
+	var hud: ArcadeHUD = main_node.hud
+	
+	# 1. Verify cursor shape on all buttons
+	var all_buttons := hud.find_children("*", "Button", true, false)
+	if all_buttons.is_empty():
+		printerr("FAIL: No buttons found in HUD")
+		return false
+	for btn in all_buttons:
+		if btn.mouse_default_cursor_shape != Control.CURSOR_POINTING_HAND:
+			printerr("FAIL: Button '", btn.text, "' does not have CURSOR_POINTING_HAND")
+			return false
+		# Verify no buttons contain icon prefixes
+		for icon_sym in ["⏸", "◀", "▶", "♾", "↺", "☰"]:
+			if icon_sym in btn.text:
+				printerr("FAIL: Button '", btn.text, "' still contains icon '", icon_sym, "'")
+				return false
+	print("  ✓ All ", all_buttons.size(), " buttons have CURSOR_POINTING_HAND set and no icon prefixes.")
+	
+	# 2. Check modal center container & panel centering & compact sizing
+	var center_containers := hud.modal_layer.find_children("*", "CenterContainer", true, false)
+	if center_containers.is_empty():
+		printerr("FAIL: modal_layer does not contain a CenterContainer")
+		return false
+	var panels := hud.modal_layer.find_children("*", "Panel", true, false)
+	if panels.is_empty():
+		printerr("FAIL: modal_layer does not contain a Panel")
+		return false
+	var modal_panel: Panel = panels[0]
+	if modal_panel.custom_minimum_size.y > 280:
+		printerr("FAIL: modal panel has too much vertical space: ", modal_panel.custom_minimum_size.y)
+		return false
+	print("  ✓ Modal layer uses CenterContainer and compact panel height (", modal_panel.custom_minimum_size.y, "px).")
+	
+	# 3. Check vertical button stack in modal
+	var modal_btn_containers := hud.modal_layer.find_children("*", "VBoxContainer", true, false)
+	var found_button_vbox := false
+	for v in modal_btn_containers:
+		var btns_in_v: Array[Node] = v.find_children("*", "Button", false, false)
+		if btns_in_v.size() >= 3:
+			found_button_vbox = true
+			for b in btns_in_v:
+				var btn: Button = b
+				if btn.custom_minimum_size.x != 200:
+					printerr("FAIL: Modal button '", btn.text, "' width is not 200, got: ", btn.custom_minimum_size.x)
+					return false
+	if not found_button_vbox:
+		printerr("FAIL: Modal buttons are not stacked in a VBoxContainer")
+		return false
+	print("  ✓ Modal buttons are vertically stacked with uniform width.")
+	
+	# 4. Check 'Main Menu' button text
+	var menu_btn_found := false
+	for btn in all_buttons:
+		if "Main Menu" in btn.text:
+			menu_btn_found = true
+			break
+	if not menu_btn_found:
+		printerr("FAIL: Could not find 'Main Menu' button in HUD")
+		return false
+	print("  ✓ 'Main Menu' button renamed and verified.")
+	
+	# 5. Start campaign and test ESC key triggering pause
+	main_node._on_play_campaign(1)
+	if main_node.is_paused:
+		printerr("FAIL: Game should not start paused")
+		return false
+	
+	# Simulate ESC key press to pause
+	var esc_event := InputEventKey.new()
+	esc_event.pressed = true
+	esc_event.keycode = KEY_ESCAPE
+	main_node._unhandled_input(esc_event)
+	
+	if not main_node.is_paused or not hud.modal_layer.visible:
+		printerr("FAIL: Pressing ESC did not pause the game or show modal")
+		return false
+	if not hud.modal_resume_btn.visible:
+		printerr("FAIL: Resume button is not visible when paused")
+		return false
+	print("  ✓ ESC key successfully triggers Pause menu.")
+	
+	# Simulate ESC key press to unpause / resume
+	main_node._unhandled_input(esc_event)
+	if main_node.is_paused or hud.modal_layer.visible:
+		printerr("FAIL: Pressing ESC again did not resume the game")
+		return false
+	print("  ✓ ESC key successfully resumes game.")
+	
+	# Simulate pause again, then resume via resume button
+	main_node._unhandled_input(esc_event)
+	if not main_node.is_paused:
+		printerr("FAIL: ESC did not pause on second cycle")
+		return false
+	hud.modal_resume_btn.pressed.emit()
+	if main_node.is_paused or hud.modal_layer.visible:
+		printerr("FAIL: Clicking Resume button did not unpause game")
+		return false
+	print("  ✓ Resume button successfully unpauses game.")
+
+	# Simulate pause again, click Main Menu button, verify return to Home
+	main_node._unhandled_input(esc_event)
+	hud.return_to_carousel_requested.emit()
+	if not hud.home_layer.visible or hud.ingame_layer.visible:
+		printerr("FAIL: Main Menu did not return to home layer")
+		return false
+	print("  ✓ 'Main Menu' button successfully returns to Home screen.")
+	
 	main_node.queue_free()
 	return true
