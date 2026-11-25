@@ -176,21 +176,31 @@ func _on_board_swap_requested(p1: Vector2i, p2: Vector2i) -> void:
 	else:
 		board_logic.execute_swap(p1, p2)
 		board_view.animate_swap(p1, p2, func():
-			_start_cascade_chain(p2, is_beat)
+			_start_cascade_chain(p1, p2, is_beat)
 		)
 
 func _execute_hypercube_resolution(hyper_pos: Vector2i, target_pos: Vector2i, is_beat: bool) -> void:
+	cascade_count = 1
 	var result := board_logic.resolve_hypercube_swap(hyper_pos, target_pos)
 	sfx.play_hypercube_wipe()
 	bg_3d.trigger_beat_shockwave(2.0, Color.WHITE)
 	_apply_turn_result(result, is_beat, hyper_pos)
 
-func _start_cascade_chain(last_swap_pos: Vector2i, is_beat: bool) -> void:
+func _start_cascade_chain(p1: Vector2i, p2: Vector2i, is_beat: bool) -> void:
 	cascade_count = 0
-	_step_cascade(last_swap_pos, is_beat)
+	_step_cascade(p1, p2, is_beat)
 
-func _step_cascade(last_swap_pos: Vector2i, is_beat: bool) -> void:
-	var result := board_logic.resolve_matches_and_specials(last_swap_pos)
+const MAX_CASCADE_STEPS := 30
+
+func _step_cascade(p1: Vector2i, p2: Vector2i, is_beat: bool) -> void:
+	if cascade_count >= MAX_CASCADE_STEPS:
+		push_warning("Reached maximum cascade depth safety limit.")
+		is_resolving_turn = false
+		cascade_count = 0
+		_check_objectives()
+		return
+
+	var result := board_logic.resolve_matches_and_specials(p1, p2)
 	var cleared_cells: Array = result["cleared_cells"]
 	
 	if cleared_cells.is_empty():
@@ -212,17 +222,22 @@ func _step_cascade(last_swap_pos: Vector2i, is_beat: bool) -> void:
 	max_cascade = maxi(max_cascade, cascade_count)
 	total_matches += 1
 	
-	_apply_turn_result(result, is_beat, last_swap_pos)
+	var text_pos := p1 if p1 != Vector2i(-1, -1) else p2
+	if text_pos == Vector2i(-1, -1) and not cleared_cells.is_empty():
+		text_pos = cleared_cells[0]
+	
+	_apply_turn_result(result, is_beat, text_pos)
 
 func _apply_turn_result(result: Dictionary, is_beat: bool, text_pos: Vector2i) -> void:
 	var delta_score: int = result["score_delta"]
 	
 	if is_beat:
-		on_beat_matches += 1
 		delta_score = int(delta_score * 1.5)
-		hud.trigger_on_beat_banner()
-		bg_3d.trigger_beat_shockwave(1.2, Color(1.0, 0.9, 0.2))
-		board_view.show_floating_text("ON BEAT! 1.5x", text_pos, Color(1.0, 0.9, 0.2))
+		if cascade_count == 1:
+			on_beat_matches += 1
+			hud.trigger_on_beat_banner()
+			bg_3d.trigger_beat_shockwave(1.2, Color(1.0, 0.9, 0.2))
+			board_view.show_floating_text("ON BEAT! 1.5x", text_pos, Color(1.0, 0.9, 0.2))
 	
 	# Apply cascade multiplier
 	if cascade_count > 1:
@@ -261,7 +276,7 @@ func _apply_turn_result(result: Dictionary, is_beat: bool, text_pos: Vector2i) -
 			# Animate gravity drop
 			var refill := board_logic.apply_gravity_and_refill()
 			board_view.animate_gravity_and_spawns(refill["movements"], refill["spawns"], func():
-				_step_cascade(Vector2i(-1, -1), is_beat)
+				_step_cascade(Vector2i(-1, -1), Vector2i(-1, -1), is_beat)
 			)
 	)
 

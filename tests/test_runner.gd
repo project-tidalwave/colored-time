@@ -127,6 +127,38 @@ func test_board_logic() -> bool:
 		return false
 	print("  ✓ 4-in-a-row Flame Gem creation verified.")
 	
+	# 2b. Test 4-in-a-row Cascade (no swap pos) -> ensures NO infinite loop
+	board._init_empty_grid()
+	for x in range(4):
+		board.get_cell(x, 0).color = 1
+	var res4_cascade := board.resolve_matches_and_specials()
+	if res4_cascade["special_spawns"].size() != 1:
+		printerr("FAIL: Cascade 4-in-a-row spawned multiple specials: ", res4_cascade["special_spawns"])
+		return false
+	if not board._detect_raw_matches().is_empty():
+		printerr("FAIL: Matches still remain after cascade resolution (infinite loop bug!)")
+		return false
+	# Verify non-special cells in the 4-match are cleared
+	var cleared_non_specials := 0
+	for x in range(4):
+		if not res4_cascade["special_spawns"].has(Vector2i(x, 0)):
+			if board.get_cell(x, 0).color == -1:
+				cleared_non_specials += 1
+	if cleared_non_specials != 3:
+		printerr("FAIL: Expected 3 cleared cells in 4-match, got ", cleared_non_specials)
+		return false
+	print("  ✓ Cascade 4-in-a-row single-spawn and clean-clear verified (infinite loop prevented).")
+	
+	# 2c. Test 4-in-a-row with alternate swap pos (p1 instead of p2)
+	board._init_empty_grid()
+	for x in range(4):
+		board.get_cell(x, 0).color = 1
+	var res4_alt := board.resolve_matches_and_specials(Vector2i(-1, -1), Vector2i(0, 0))
+	if not res4_alt["special_spawns"].has(Vector2i(0, 0)):
+		printerr("FAIL: 4-in-a-row did not prioritize alternate swap pos: ", res4_alt)
+		return false
+	print("  ✓ 4-in-a-row alternate swap pos (p1) verified.")
+	
 	# 3. Test 5-in-a-row straight -> Hypercube
 	board._init_empty_grid()
 	for x in range(5):

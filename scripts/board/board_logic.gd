@@ -248,7 +248,7 @@ func _detect_raw_matches() -> Array[Dictionary]:
 	
 	return results
 
-func resolve_matches_and_specials(last_swap_pos: Vector2i = Vector2i(-1, -1)) -> Dictionary:
+func resolve_matches_and_specials(last_swap_pos: Vector2i = Vector2i(-1, -1), swap_pos_alt: Vector2i = Vector2i(-1, -1)) -> Dictionary:
 	# Returns:
 	# {
 	#   "cleared_cells": [Vector2i, ...],
@@ -266,44 +266,62 @@ func resolve_matches_and_specials(last_swap_pos: Vector2i = Vector2i(-1, -1)) ->
 	var special_events: Array[String] = []
 	var score_delta := 0
 	
-	# Map cells to horizontal and vertical run sizes
-	var cell_h_runs: Dictionary = {}
-	var cell_v_runs: Dictionary = {}
 	for m in raw_matches:
 		var cells: Array = m["cells"]
 		for cell_pos in cells:
-			if m["type"] == "h":
-				cell_h_runs[cell_pos] = maxi(cell_h_runs.get(cell_pos, 0), cells.size())
-			else:
-				cell_v_runs[cell_pos] = maxi(cell_v_runs.get(cell_v_runs, 0), cells.size())
 			cleared_dict[cell_pos] = true
 	
-	# Special Gem Creation
-	for cell_pos in cleared_dict.keys():
-		var h_len: int = cell_h_runs.get(cell_pos, 0)
-		var v_len: int = cell_v_runs.get(cell_pos, 0)
+	score_delta += cleared_dict.size() * 100
+	
+	# Detect Star Gems (T/L shape intersections between H and V runs of the same color)
+	var consumed_matches: Dictionary = {}
+	for i in range(raw_matches.size()):
+		var m1: Dictionary = raw_matches[i]
+		if m1["type"] != "h":
+			continue
+		for j in range(raw_matches.size()):
+			var m2: Dictionary = raw_matches[j]
+			if m2["type"] != "v" or m1["color"] != m2["color"]:
+				continue
+			for p1: Vector2i in m1["cells"]:
+				if m2["cells"].has(p1):
+					special_spawns[p1] = SpecialType.STAR
+					special_events.append("STAR_CREATED")
+					score_delta += 500
+					consumed_matches[i] = true
+					consumed_matches[j] = true
+					break
+	
+	# Detect Line Specials (5-in-a-row Hypercube, 4-in-a-row Flame Gem)
+	for i in range(raw_matches.size()):
+		if consumed_matches.has(i):
+			continue
+		var m: Dictionary = raw_matches[i]
+		var cells: Array = m["cells"]
+		var count: int = cells.size()
 		
-		# 1. Star Gem (T or L intersection: both h and v >= 3)
-		if h_len >= 3 and v_len >= 3:
-			special_spawns[cell_pos] = SpecialType.STAR
-			special_events.append("STAR_CREATED")
-			score_delta += 500
-		# 2. Hypercube (5 in a line)
-		elif h_len >= 5 or v_len >= 5:
-			# Prioritize user swap pos if part of this run
-			var spawn_pos: Vector2i = last_swap_pos if cleared_dict.has(last_swap_pos) else cell_pos
+		if count >= 5:
+			var spawn_pos: Vector2i = Vector2i(-1, -1)
+			if cells.has(last_swap_pos):
+				spawn_pos = last_swap_pos
+			elif cells.has(swap_pos_alt):
+				spawn_pos = swap_pos_alt
+			else:
+				spawn_pos = cells[count / 2]
 			special_spawns[spawn_pos] = SpecialType.HYPERCUBE
 			special_events.append("HYPERCUBE_CREATED")
 			score_delta += 1000
-		# 3. Flame Gem (4 in a line)
-		elif h_len == 4 or v_len == 4:
-			var spawn_pos: Vector2i = last_swap_pos if cleared_dict.has(last_swap_pos) else cell_pos
+		elif count == 4:
+			var spawn_pos: Vector2i = Vector2i(-1, -1)
+			if cells.has(last_swap_pos):
+				spawn_pos = last_swap_pos
+			elif cells.has(swap_pos_alt):
+				spawn_pos = swap_pos_alt
+			else:
+				spawn_pos = cells[count / 2]
 			special_spawns[spawn_pos] = SpecialType.FLAME
 			special_events.append("FLAME_CREATED")
 			score_delta += 250
-		else:
-			score_delta += 100
-	
 	# Trigger Special Gem Detonations for matched specials
 	var specials_to_detonate: Array[Vector2i] = []
 	for pos in cleared_dict.keys():
