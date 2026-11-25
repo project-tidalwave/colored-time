@@ -48,8 +48,14 @@ func _ready() -> void:
 	_setup_ui()
 	_connect_signals()
 	
-	# Start in carousel preview mode
-	hud.show_carousel()
+	# Set default ambient background style
+	var t := TrackCatalog.get_track_by_id(1)
+	if not t.is_empty():
+		bg_3d.set_track_style(t["style"], t["key_hue"])
+		sfx.set_track_tuning(t["root_freq"], t["style"])
+	
+	# Start on Home Screen
+	hud.show_home()
 
 func _setup_core_nodes() -> void:
 	# 3D Background
@@ -83,6 +89,11 @@ func _setup_ui() -> void:
 	canvas_layer.add_child(hud)
 
 func _connect_signals() -> void:
+	hud.new_game_requested.connect(_on_new_game)
+	hud.high_scores_requested.connect(_on_high_scores)
+	hud.exit_requested.connect(_on_exit_requested)
+	hud.back_to_home_requested.connect(_on_back_to_home)
+	
 	hud.play_campaign_requested.connect(_on_play_campaign)
 	hud.play_endless_requested.connect(_on_play_endless)
 	hud.track_selected_for_preview.connect(_on_track_preview)
@@ -93,6 +104,19 @@ func _connect_signals() -> void:
 	
 	board_view.swap_requested.connect(_on_board_swap_requested)
 	audio_manager.track_finished.connect(_on_track_finished)
+
+func _on_new_game() -> void:
+	hud.show_carousel()
+
+func _on_high_scores() -> void:
+	hud.show_high_scores()
+
+func _on_exit_requested() -> void:
+	get_tree().quit()
+
+func _on_back_to_home() -> void:
+	audio_manager.stop_track()
+	hud.show_home()
 
 func _on_track_preview(track_id: int) -> void:
 	current_track_id = track_id
@@ -348,6 +372,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				var vp := get_viewport()
 				if vp:
 					vp.set_input_as_handled()
+			elif hud.carousel_layer.visible or hud.high_scores_layer.visible:
+				_on_back_to_home()
+				var vp := get_viewport()
+				if vp:
+					vp.set_input_as_handled()
 
 func _on_pause_toggled() -> void:
 	if current_mode == GameMode.NONE or level_cleared or not board_view or not board_view.visible:
@@ -377,7 +406,7 @@ func _on_return_to_carousel() -> void:
 	audio_manager.stop_track()
 	board_view.visible = false
 	current_mode = GameMode.NONE
-	hud.show_carousel()
+	hud.show_home()
 
 func _process(delta: float) -> void:
 	var bass := audio_manager.bass_magnitude

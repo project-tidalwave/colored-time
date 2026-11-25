@@ -276,7 +276,7 @@ func test_main_scene_instantiation() -> bool:
 	return true
 
 func test_ui_interaction() -> bool:
-	print("\n[TEST 7] UI Interaction & Screen Boundaries...")
+	print("\n[TEST 7] UI Interaction, Home Screen & Navigation Flow...")
 	root.size = Vector2i(1280, 800)
 	var main_scene := load("res://scenes/Main.tscn") as PackedScene
 	var main_node = main_scene.instantiate()
@@ -286,6 +286,32 @@ func test_ui_interaction() -> bool:
 	
 	var hud: ArcadeHUD = main_node.hud
 	var board_view: BoardView = main_node.board_view
+	
+	# 1. Verify Home Screen is initially visible
+	if not hud.home_layer.visible:
+		printerr("FAIL: Home layer is not visible on boot")
+		return false
+	
+	var home_buttons: Array[Button] = []
+	for b in hud.find_children("*", "Button", true, false):
+		if hud.home_layer.is_ancestor_of(b):
+			home_buttons.append(b)
+			var r: Rect2 = b.get_global_rect()
+			print("Home Button: '", b.text, "' rect: ", r)
+			if r.position.y < 0 or r.end.y > 800 or r.position.x < 0 or r.end.x > 1280:
+				printerr("FAIL: Home Button off-screen: '", b.text, "' rect: ", r)
+				return false
+	
+	if home_buttons.size() != 3:
+		printerr("FAIL: Expected 3 home buttons (New Game, High Scores, Exit), found: ", home_buttons.size())
+		return false
+	print("  ✓ All 3 home screen buttons verified inside 1280x800 viewport.")
+
+	# 2. Test New Game button -> Carousel
+	main_node._on_new_game()
+	if not hud.carousel_layer.visible or hud.home_layer.visible:
+		printerr("FAIL: _on_new_game did not switch from home to carousel")
+		return false
 	
 	# Verify Carousel buttons are fully within the 1280x800 viewport
 	var buttons_found: Array[Button] = []
@@ -299,16 +325,45 @@ func test_ui_interaction() -> bool:
 				return false
 	
 	if buttons_found.size() < 4:
-		printerr("FAIL: Expected 4 carousel buttons, found ", buttons_found.size())
+		printerr("FAIL: Expected at least 4 carousel buttons, found ", buttons_found.size())
 		return false
-	
-	if buttons_found.size() < 4:
-		printerr("FAIL: Expected at least 4 visible carousel buttons, found ", buttons_found.size())
-		return false
-	
 	print("  ✓ All carousel buttons strictly inside 1280x800 viewport boundaries.")
+
+	# 3. Test Back button / ESC from carousel -> Home
+	var esc_event := InputEventKey.new()
+	esc_event.pressed = true
+	esc_event.keycode = KEY_ESCAPE
+	main_node._unhandled_input(esc_event)
+	if not hud.home_layer.visible or hud.carousel_layer.visible:
+		printerr("FAIL: ESC did not return from carousel to home layer")
+		return false
+	print("  ✓ ESC key returns from Carousel to Home Screen.")
+
+	# 4. Test High Scores screen & 36 tracks leaderboard
+	main_node._on_high_scores()
+	if not hud.high_scores_layer.visible or hud.home_layer.visible:
+		printerr("FAIL: _on_high_scores did not show high_scores_layer")
+		return false
 	
-	# Launch campaign
+	var list_vbox: VBoxContainer = hud.high_scores_layer.find_child("TrackListVBox", true, false)
+	if not list_vbox:
+		printerr("FAIL: TrackListVBox not found in high scores layer")
+		return false
+	var track_rows: Array[Node] = list_vbox.find_children("*", "PanelContainer", false, false)
+	if track_rows.size() != 36:
+		printerr("FAIL: Expected 36 track rows in high scores leaderboard, found: ", track_rows.size())
+		return false
+	print("  ✓ High Scores screen verified with all 36 tracks in leaderboard.")
+
+	# Test ESC from High Scores -> Home
+	main_node._unhandled_input(esc_event)
+	if not hud.home_layer.visible or hud.high_scores_layer.visible:
+		printerr("FAIL: ESC did not return from high scores to home layer")
+		return false
+	print("  ✓ ESC key returns from High Scores to Home Screen.")
+	
+	# 5. Launch campaign and verify gameplay
+	main_node._on_new_game()
 	main_node._on_play_campaign(1)
 	
 	# Test BoardView unhandled input cell click
@@ -464,6 +519,14 @@ func test_pause_menu_and_cursor_ux() -> bool:
 		printerr("FAIL: Clicking Resume button did not unpause game")
 		return false
 	print("  ✓ Resume button successfully unpauses game.")
+
+	# Simulate pause again, click Main Menu button, verify return to Home
+	main_node._unhandled_input(esc_event)
+	hud.return_to_carousel_requested.emit()
+	if not hud.home_layer.visible or hud.ingame_layer.visible:
+		printerr("FAIL: Main Menu did not return to home layer")
+		return false
+	print("  ✓ 'Main Menu' button successfully returns to Home screen.")
 	
 	main_node.queue_free()
 	return true
