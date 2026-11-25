@@ -23,6 +23,7 @@ func _init() -> void:
 	all_passed = test_procedural_background_3d() and all_passed
 	all_passed = test_main_scene_instantiation() and all_passed
 	all_passed = test_ui_interaction() and all_passed
+	all_passed = test_pause_menu_and_cursor_ux() and all_passed
 	
 	if all_passed:
 		print("\n>>> ALL TESTS PASSED SUCCESSFULLY! <<<")
@@ -353,5 +354,103 @@ func test_ui_interaction() -> bool:
 		return false
 	
 	print("  ✓ BoardView adjacent cell swap request verified.")
+	main_node.queue_free()
+	return true
+
+func test_pause_menu_and_cursor_ux() -> bool:
+	print("\n[TEST 8] Pause Menu Centering, Vertical Buttons, ESC key & Cursor Pointer...")
+	root.size = Vector2i(1280, 800)
+	var main_scene := load("res://scenes/Main.tscn") as PackedScene
+	var main_node = main_scene.instantiate()
+	root.add_child(main_node)
+	if not main_node.bg_3d:
+		main_node._ready()
+	
+	var hud: ArcadeHUD = main_node.hud
+	
+	# 1. Verify cursor shape on all buttons
+	var all_buttons := hud.find_children("*", "Button", true, false)
+	if all_buttons.is_empty():
+		printerr("FAIL: No buttons found in HUD")
+		return false
+	for btn in all_buttons:
+		if btn.mouse_default_cursor_shape != Control.CURSOR_POINTING_HAND:
+			printerr("FAIL: Button '", btn.text, "' does not have CURSOR_POINTING_HAND")
+			return false
+	print("  ✓ All ", all_buttons.size(), " buttons have CURSOR_POINTING_HAND set.")
+	
+	# 2. Check modal center container & panel centering
+	var center_containers := hud.modal_layer.find_children("*", "CenterContainer", true, false)
+	if center_containers.is_empty():
+		printerr("FAIL: modal_layer does not contain a CenterContainer")
+		return false
+	print("  ✓ Modal layer uses CenterContainer for screen centering.")
+	
+	# 3. Check vertical button stack in modal
+	var modal_btn_containers := hud.modal_layer.find_children("*", "VBoxContainer", true, false)
+	var found_button_vbox := false
+	for v in modal_btn_containers:
+		var btns_in_v: Array[Node] = v.find_children("*", "Button", false, false)
+		if btns_in_v.size() >= 3:
+			found_button_vbox = true
+			for b in btns_in_v:
+				var btn: Button = b
+				if btn.custom_minimum_size.x != 220:
+					printerr("FAIL: Modal button '", btn.text, "' width is not 220, got: ", btn.custom_minimum_size.x)
+					return false
+	if not found_button_vbox:
+		printerr("FAIL: Modal buttons are not stacked in a VBoxContainer")
+		return false
+	print("  ✓ Modal buttons are vertically stacked with uniform width.")
+	
+	# 4. Check 'Main Menu' button text
+	var menu_btn_found := false
+	for btn in all_buttons:
+		if "Main Menu" in btn.text:
+			menu_btn_found = true
+			break
+	if not menu_btn_found:
+		printerr("FAIL: Could not find 'Main Menu' button in HUD")
+		return false
+	print("  ✓ 'Main Menu' button renamed and verified.")
+	
+	# 5. Start campaign and test ESC key triggering pause
+	main_node._on_play_campaign(1)
+	if main_node.is_paused:
+		printerr("FAIL: Game should not start paused")
+		return false
+	
+	# Simulate ESC key press to pause
+	var esc_event := InputEventKey.new()
+	esc_event.pressed = true
+	esc_event.keycode = KEY_ESCAPE
+	main_node._unhandled_input(esc_event)
+	
+	if not main_node.is_paused or not hud.modal_layer.visible:
+		printerr("FAIL: Pressing ESC did not pause the game or show modal")
+		return false
+	if not hud.modal_resume_btn.visible:
+		printerr("FAIL: Resume button is not visible when paused")
+		return false
+	print("  ✓ ESC key successfully triggers Pause menu.")
+	
+	# Simulate ESC key press to unpause / resume
+	main_node._unhandled_input(esc_event)
+	if main_node.is_paused or hud.modal_layer.visible:
+		printerr("FAIL: Pressing ESC again did not resume the game")
+		return false
+	print("  ✓ ESC key successfully resumes game.")
+	
+	# Simulate pause again, then resume via resume button
+	main_node._unhandled_input(esc_event)
+	if not main_node.is_paused:
+		printerr("FAIL: ESC did not pause on second cycle")
+		return false
+	hud.modal_resume_btn.pressed.emit()
+	if main_node.is_paused or hud.modal_layer.visible:
+		printerr("FAIL: Clicking Resume button did not unpause game")
+		return false
+	print("  ✓ Resume button successfully unpauses game.")
+	
 	main_node.queue_free()
 	return true

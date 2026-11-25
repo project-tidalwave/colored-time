@@ -38,6 +38,7 @@ var on_beat_matches: int = 0
 var total_matches: int = 0
 var level_cleared: bool = false
 var is_resolving_turn: bool = false
+var is_paused: bool = false
 
 func _init() -> void:
 	name = "Main"
@@ -133,6 +134,7 @@ func _start_level(track_id: int) -> void:
 	total_matches = 0
 	level_cleared = false
 	is_resolving_turn = false
+	is_paused = false
 	
 	# Configure Audio & Visuals
 	bg_3d.set_track_style(t["style"], t["key_hue"])
@@ -149,7 +151,7 @@ func _start_level(track_id: int) -> void:
 	hud.show_gameplay()
 
 func _on_board_swap_requested(p1: Vector2i, p2: Vector2i) -> void:
-	if is_resolving_turn or level_cleared:
+	if is_paused or is_resolving_turn or level_cleared:
 		return
 	
 	var is_beat := audio_manager.is_on_beat(0.120)
@@ -338,24 +340,41 @@ func _on_track_finished() -> void:
 		# In endless, loop/cycle to next track seamlessly
 		_advance_endless_track()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			if current_mode != GameMode.NONE and not level_cleared and board_view and board_view.visible:
+				_on_pause_toggled()
+				var vp := get_viewport()
+				if vp:
+					vp.set_input_as_handled()
+
 func _on_pause_toggled() -> void:
-	if audio_manager.is_playing:
-		audio_manager.pause_track()
-		hud.show_results_modal("PAUSED", "Current Score: %d" % score, false)
-	else:
+	if current_mode == GameMode.NONE or level_cleared or not board_view or not board_view.visible:
+		return
+	if is_paused:
+		is_paused = false
 		audio_manager.resume_track()
 		hud.hide_modal()
+	else:
+		is_paused = true
+		audio_manager.pause_track()
+		hud.show_results_modal("PAUSED", "Current Score: %d" % score, false, true)
 
 func _on_next_level() -> void:
+	is_paused = false
 	var next_id := (current_track_id % 36) + 1
 	hud.hide_modal()
 	_start_level(next_id)
 
 func _on_replay_level() -> void:
+	is_paused = false
 	hud.hide_modal()
 	_start_level(current_track_id)
 
 func _on_return_to_carousel() -> void:
+	is_paused = false
+	audio_manager.stop_track()
 	board_view.visible = false
 	current_mode = GameMode.NONE
 	hud.show_carousel()
