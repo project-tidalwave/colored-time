@@ -1,7 +1,7 @@
 # Colored Time ⏱️💎
 
-> **Synesthetic Audio-Reactive Match-3 & Procedural 3D Geometry Engine**  
-> *Built with Godot 4.7+ (Forward+ Renderer, Jolt Physics, GLSL Shaders, Real-Time Audio DSP)*
+> **A synesthetic jazz-rhythm match-3 puzzle game where every swap grooves to the beat and shapes a living 3D luminescent world.**  
+> *Developed for Godot 4.7+ (Forward+ Renderer, Jolt 3D Physics, Analytical GLSL Shaders, Real-Time Audio DSP)*
 
 [![Godot Engine](https://img.shields.io/badge/Godot-4.7%2B_Forward%2B-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org)
 [![Shaders](https://img.shields.io/badge/Shaders-GLSL_%26_Custom_SDF-FF6B6B)](file:///Users/leonid/src/colored-time/shaders)
@@ -12,26 +12,156 @@
 ---
 
 ## 📑 Table of Contents
-- [Architecture & Data Pipeline](#-architecture--data-pipeline)
-- [Graphics & Shader Engineering Deep Dive](#-graphics--shader-engineering-deep-dive)
+- [✨ The Experience](#-the-experience)
+- [🎮 Game Modes](#-game-modes)
+- [🕹️ How to Play & Controls](#-how-to-play--controls)
+  - [The Rhythm Window: Swap on the Beat](#the-rhythm-window-swap-on-the-beat)
+  - [Gravity Cascades & Musical Harmonics](#gravity-cascades--musical-harmonics)
+  - [Assist Systems & Board Reshuffle](#assist-systems--board-reshuffle)
+- [💎 Gem Arsenal, Powers & Hazards](#-gem-arsenal-powers--hazards)
+  - [The 7 Gem Cuts](#the-7-gem-cuts)
+  - [Special Power Gems](#special-power-gems)
+  - [Board Hazards & Modifiers](#board-hazards--modifiers)
+- [🎷 36-Track Soundtrack & The 6 Musical Worlds](#-36-track-soundtrack--the-6-musical-worlds)
+  - [6 Style Archetypes](#6-style-archetypes)
+  - [12-Tone Harmonic Color Wheel](#12-tone-harmonic-color-wheel)
+- [⚙️ Under the Hood: Technical Architecture](#️-under-the-hood-technical-architecture)
+  - [Core Pipeline Architecture](#core-pipeline-architecture)
   - [1. Real-Time 3D Spatial Audio-Reactive MultiMesh Stage](#1-real-time-3d-spatial-audio-reactive-multimesh-stage)
   - [2. Pure Analytical 2D Signed Distance Field (SDF) Gem Shaders](#2-pure-analytical-2d-signed-distance-field-sdf-gem-shaders)
   - [3. Multi-Layer Chrono Ice Blocker Shader](#3-multi-layer-chrono-ice-blocker-shader)
-- [Real-Time Audio DSP & Procedural SFX Synthesis](#-real-time-audio-dsp--procedural-sfx-synthesis)
-  - [Fast Fourier Transform (FFT) Frequency Analysis](#fast-fourier-transform-fft-frequency-analysis)
-  - [Algorithmic Chime Waveform Synthesis](#algorithmic-chime-waveform-synthesis)
-- [Systemic Audio-Visual Progression](#-systemic-audio-visual-progression)
-  - [12-Tone Harmonic Color Wheel](#12-tone-harmonic-color-wheel)
-  - [6 Procedural Geometry Archetypes](#6-procedural-geometry-archetypes)
-- [Core Match-3 Engine & Rhythm Mechanics](#-core-match-3-engine--rhythm-mechanics)
-- [Headless Test Suite & Engine Verification](#-headless-test-suite--engine-verification)
-- [Repository Structure](#-repository-structure)
+  - [4. Real-Time Audio DSP & Procedural SFX Synthesis](#4-real-time-audio-dsp--procedural-sfx-synthesis)
+- [🚀 Quick Start & How to Run](#-quick-start--how-to-run)
+- [🧪 Headless Test Suite & Engine Verification](#-headless-test-suite--engine-verification)
+- [📁 Repository Structure](#-repository-structure)
 
 ---
 
-## 🏛️ Architecture & Data Pipeline
+## ✨ The Experience
 
-`Colored Time` couples deterministic board state resolution with a real-time reactive audio-visual rendering pipeline. The architecture decouples the low-level digital signal processing (DSP) and high-frequency rendering from turn-based puzzle state through event buses and shader uniform streaming.
+**Colored Time** merges the addictive flow of classic jewel-matching puzzle games (*Bejeweled*) with the pulse of live jazz and reactive 3D visual synesthesia. 
+
+Hovering over a floating 3D spatial stage, an $8 \times 8$ glass grid pulses with light and color. As an original 36-track jazz and blues soundtrack plays, the music doesn't merely loop in the background—it directly controls the universe:
+- **Bass frequencies (20–250 Hz)** kick the camera FOV and physically deform geometric monoliths in real time.
+- **Mid-range melodies (250–2000 Hz)** spin concentric gyro-rings and morph color harmonies.
+- **High-frequency treble (2000–16000 Hz)** ignites sparkling rim highlights and grid edge shimmer.
+- **Every match you make** synthesizes dynamic pitched chimes in tune with the track's musical key, ascending up blues and major scales with every cascade step.
+
+---
+
+## 🎮 Game Modes
+
+### 🌟 36-Level Track Campaign
+Embark on a musical journey through 36 hand-crafted tracks spanning bebop, swing, smoky ballads, and complex polyrhythmic blues.
+- **Objective**: Fill the **Chrono Gauge** to 100% and shatter all **Chrono Ice** before the track finishes.
+- **Score Target**: Reach the level's point goal through smart combos and on-beat multipliers.
+- **3-Star Mastery**:
+  - ★☆☆ **1 Star**: Clear the track (100% of target score).
+  - ★★☆ **2 Stars**: Exceed target by 140%.
+  - ★★★ **3 Stars**: Master the track by scoring 180%+ of target.
+- **Progression**: Unlocks high score records, maximum cascade records, and rhythm accuracy statistics in persistent local storage.
+
+### ♾️ Endless / Zen Mode
+Lose yourself in uninterrupted jazz and puzzle flow.
+- **No Timer / No Fail State**: Play at your own pace without pressure.
+- **Seamless Progression**: Hitting the stage score target dynamically transitions to the next track in the catalog, continuously shifting the 3D visual archetype, musical key, and board atmosphere without interrupting your combo flow.
+
+---
+
+## 🕹️ How to Play & Controls
+
+| Action | Control | Description |
+| :--- | :--- | :--- |
+| **Swap Gems** | **Click & Drag** or **Click Two Adjacent** | Swap any two horizontally or vertically adjacent gems to line up 3 or more of the same color. |
+| **Snapback** | *Automatic* | Swaps that do not form a match smoothly snap back into place. |
+| **Pause Menu** | **ESC** or **Pause Button** | Opens the centered modal to inspect score, resume, replay, or exit to the track carousel. |
+| **Carousel Navigation** | **Left / Right Arrows** or **Track Cards** | Browse all 36 tracks, preview audio, inspect BPM, musical key, and stage archetypes. |
+
+### The Rhythm Window: Swap on the Beat
+In the center of the HUD, a **Beat Ring** contracts and expands with the rhythm clock (computed from the track's exact BPM).
+- **On-Beat Window**: Swap within $\pm 120\text{ms}$ of the beat tick.
+- **Bonuses**:
+  - **1.5x Score Multiplier** on all points generated by that move.
+  - **+5% Instant Chrono Gauge Boost**.
+  - **Stage Shockwave**: Detonates an instantaneous radial distortion wave across the 3D background geometry.
+
+```text
+[ BEAT TICK ]  ───( ±120ms Window )───>  SWAP!  ───>  1.5x MULTIPLIER + 3D SHOCKWAVE 💥
+```
+
+### Gravity Cascades & Musical Harmonics
+When gems match and clear, gravity immediately pulls remaining gems down while new procedural gems fall in from the top:
+- **Chain Multipliers**: Consecutive chain reactions scale multipliers: $1\times \to 2\times \to 3\times \to 4\times \dots$
+- **Harmonic Chimes**: Every step of the cascade triggers a procedurally synthesized chime whose pitch steps up the track's musical scale (Blues or Major intervals). Deep cascades sound like an improvisational jazz solo!
+
+### Assist Systems & Board Reshuffle
+- **Idle Hints**: If no move is made for 5 seconds, the board gently highlights a valid swap.
+- **Deadlock Reshuffle**: The engine continuously checks for possible moves. If zero valid swaps remain, the board automatically reshuffles all active gems while preserving active power gems and ice blockers—ensuring you never get trapped in a dead game.
+
+---
+
+## 💎 Gem Arsenal, Powers & Hazards
+
+### The 7 Gem Cuts
+Every gem is rendered using real-time analytical Signed Distance Fields (SDF) with facet refractions and inner bevels:
+
+| Gem Name | Cut & Shape | Base Color | Visual Hierarchy |
+| :--- | :--- | :---: | :--- |
+| **Ruby** | Diamond / Octahedron | `#FF1E56` | Razor-sharp dual-pyramid crystal |
+| **Amber** | Hexagon / Honeycomb | `#FFB800` | 6-sided beveled amber honeycomb |
+| **Emerald** | Cushion / Square | `#00F5A0` | Rounded quadrilateral prism with mint glow |
+| **Sapphire** | Trillion / Triangle | `#00D2FF` | 3-fold folding symmetry with refractive inner core |
+| **Amethyst** | Cabochon / Circle | `#A855F7` | Smooth polished sphere with radial specular flare |
+| **Pearl** | Radiant / Six-Point Star | `#F8FAFC` | Hexagram radiant intersection with brilliant white emission |
+| **Obsidian** | Briolette / Teardrop | `#38BDF8` | Asymmetric teardrop cut (7th gem in advanced styles) |
+
+### Special Power Gems
+Create matching formations of 4 or 5 gems to forge explosive power gems:
+
+| Special Gem | Formation | In-Game Effect | Points |
+| :--- | :---: | :--- | :---: |
+| 🔥 **Flame Gem** | **4-in-a-row** | Detonates a $3 \times 3$ fiery explosive area blast when matched, shattering gems and surrounding ice blockers. | **+400** |
+| ⚡ **Star Gem** | **T-shape or L-shape** (5 gems) | Fires dual high-energy laser beams that clear the entire row and column simultaneously. | **+600** |
+| 💎 **Hypercube (Chrono Prism)** | **5-in-a-row line** | Swapping with any adjacent gem obliterates **every gem of that color** across the entire board with a chromatic sub-bass blast. | **+1500** |
+
+### Board Hazards & Modifiers
+- 🧊 **Chrono Ice**: Frozen blockers that lock grid cells. Matching adjacent gems fractures the ice across multiple damage tiers until it shatters into sparkling shards (+300 pts).
+- 🧩 **Procedural Board Masks**: Higher-difficulty stages feature customized board geometry—including corner cutouts, cross bottlenecks, and isolated chambers that test your matching strategy.
+
+---
+
+## 🎷 36-Track Soundtrack & The 6 Musical Worlds
+
+Each of the 36 curated tracks belongs to one of 6 distinct musical and visual archetypes, each introducing unique BPM tempos, gem palettes, board masks, and procedural 3D scenery.
+
+### 6 Style Archetypes
+
+| Tracks | Archetype | Tempo (BPM) | 3D Visual Geometry Stage | Level Modifiers |
+| :---: | :--- | :---: | :--- | :--- |
+| **01 – 06** | `bird_blues` | 135 – 160 | Angular bebop prism tunnel & crystalline lattices | 6 gem colors, light Chrono Ice outer edges |
+| **07 – 12** | `medium_swing` | 118 – 130 | Concentric swinging gyro-rings & floating ribbons | 6 gem colors, symmetric corner cutouts |
+| **13 – 18** | `slow_ballad` | 72 – 84 | Floating crystalline monoliths & harmonic sine waves | 6 gem colors, relaxed beat window, deep cascades |
+| **19 – 24** | `minor_blues` | 120 – 138 | Tessellated fractal pillars & hexagonal lattices | 7 gem colors, multi-layer Chrono Ice blocks |
+| **25 – 30** | `burning_swing`| 185 – 210 | Kinetic wireframe vortex & spiral polyhedra | 7 gem colors, octagonal corner masks, fast tempo |
+| **31 – 36** | `spiced_blues` | 130 – 152 | Chromatic torus knots & kaleidoscopic mandala shards | 7 gem colors, asymmetric board masks & ice locks |
+
+### 12-Tone Harmonic Color Wheel
+The musical key of each track maps to a specific hue on the chromatic color circle, dynamically dictating directional lighting, ambient environmental color, and 3D mesh tonality:
+
+```text
+C  (0.00 / Crimson Red)  ──>  G  (0.58 / Royal Blue)  ──>  D  (0.08 / Warm Amber)
+A  (0.16 / Golden Yellow) ──>  E  (0.25 / Jade Green)  ──>  B  (0.33 / Emerald Mint)
+F# (0.42 / Cyan Teal)     ──>  Db (0.50 / Cerulean)    ──>  Ab (0.66 / Deep Indigo)
+Eb (0.75 / Royal Violet)  ──>  Bb (0.83 / Magenta)     ──>  F  (0.92 / Hot Pink)
+```
+
+---
+
+## ⚙️ Under the Hood: Technical Architecture
+
+### Core Pipeline Architecture
+
+`Colored Time` couples deterministic board state resolution with a real-time reactive audio-visual rendering pipeline. Low-level digital signal processing (DSP) and high-frequency rendering are decoupled from turn-based puzzle state through event buses and shader uniform streaming:
 
 ```mermaid
 flowchart TD
@@ -69,8 +199,6 @@ flowchart TD
 ```
 
 ---
-
-## 🔮 Graphics & Shader Engineering Deep Dive
 
 ### 1. Real-Time 3D Spatial Audio-Reactive MultiMesh Stage
 
@@ -150,92 +278,52 @@ Gems compute internal optical refraction and chromatic dispersion without pre-ba
 
 *Source: [`shaders/chrono_ice.gdshader`](file:///Users/leonid/src/colored-time/shaders/chrono_ice.gdshader)*
 
-Tiles locked by Chrono Ice feature dynamic crack propagation and frosted refractive textures. As gems adjacent to ice are matched, damage states dynamically propagate Voronoi fracture lines across the tile overlay.
+Tiles locked by Chrono Ice feature dynamic crack propagation and frosted refractive textures. As gems adjacent to ice are matched, damage states dynamically propagate Voronoi fracture lines across the tile overlay until shattered.
 
 ---
 
-## 🎛️ Real-Time Audio DSP & Procedural SFX Synthesis
+### 4. Real-Time Audio DSP & Procedural SFX Synthesis
 
 *Source: [`scripts/core/audio_manager.gd`](file:///Users/leonid/src/colored-time/scripts/core/audio_manager.gd) & [`scripts/core/procedural_sfx.gd`](file:///Users/leonid/src/colored-time/scripts/core/procedural_sfx.gd)*
 
-### Fast Fourier Transform (FFT) Frequency Analysis
-
+#### Fast Fourier Transform (FFT) Frequency Analysis
 Audio spectrum analysis runs continuously on the dedicated `Music` audio bus via Godot's `AudioEffectSpectrumAnalyzerInstance`:
 - **Buffer Length**: $100\text{ms}$ ($0.1\text{s}$)
 - **FFT Size**: $2048$ bins
-- **Frequency Bands**:
-  - **Sub / Bass Band ($20\text{Hz} - 250\text{Hz}$)**: Controls 3D geometry scale, camera FOV kick ($\Delta \text{FOV} \approx 70^\circ \to 74^\circ$), and vertex displacement.
-  - **Mid-Range Band ($250\text{Hz} - 2000\text{Hz}$)**: Drives procedural rotation velocities, ribbon twist angles, and primary/secondary color blending.
-  - **Treble Band ($2000\text{Hz} - 16000\text{Hz}$)**: Modulates wireframe rim highlights, sparkling particles, and grid borders.
+- **Smoothing**: Raw FFT magnitudes are smoothed using frame-independent exponential damping:
+  $$\text{Mag}_{\text{smoothed}} = \text{lerp}\left(\text{Mag}_{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right) \quad (\lambda = 20.0)$$
 
-To eliminate audio frame jitter, raw FFT magnitudes are smoothed using frame-independent exponential damping:
-$$\text{Mag}_{\text{smoothed}} = \text{lerp}\left(\text{Mag}_{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right) \quad (\lambda = 20.0)$$
+#### Algorithmic Chime Waveform Synthesis
+Sound effects are synthesized **in memory at runtime** into 44.1 kHz, 16-bit PCM mono `AudioStreamWAV` buffers with zero reliance on static audio sample files:
+$$y(t) = \left[ \sin(2\pi f t) + 0.45 \sin(4\pi f t) + 0.20 \sin(6\pi f t) \right] \cdot A(t)$$
 
----
-
-### Algorithmic Chime Waveform Synthesis
-
-`ProceduralSFX` synthesizes all sound effects **in memory at runtime** into 44.1 kHz, 16-bit PCM mono `AudioStreamWAV` buffers. No pre-recorded sample files are required for match chimes, ice shattering, or hypercube blasts.
-
-```
-Harmonic Synthesis Formula:
-y(t) = [ sin(2π f t) + 0.45 sin(4π f t) + 0.20 sin(6π f t) ] · A(t)
-```
-
-Where the amplitude envelope $A(t)$ implements an exponential ADSR decay:
+With an exponential ADSR decay envelope:
 $$A(t) = \begin{cases} \frac{t}{t_{\text{attack}}} & t < t_{\text{attack}} \\ e^{-\frac{t - t_{\text{attack}}}{\tau}} & t \ge t_{\text{attack}} \end{cases}$$
 
-#### Cascade Musical Transposition
-When chain cascades occur, the synthesis engine calculates the pitch by indexing into the current track's musical scale:
+Cascade chain pitches index dynamically into the active track's scale:
 $$f_{\text{cascade}} = f_{\text{root}} \cdot 2^{\frac{S[k]}{12}}$$
-- **Blues Scale Intervals**: $S = [0, 3, 5, 6, 7, 10, 12, 15, 17, 18, 19, 22]$
-- **Major Scale Intervals**: $S = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24]$
 
 ---
 
-## 🎼 Systemic Audio-Visual Progression
+## 🚀 Quick Start & How to Run
 
-*Source: [`scripts/core/track_catalog.gd`](file:///Users/leonid/src/colored-time/scripts/core/track_catalog.gd) & [`specs.yml`](file:///Users/leonid/src/colored-time/specs.yml)*
+### System Requirements
+- **Engine**: Godot Engine `4.3+` or `4.7+` (Forward+ Renderer recommended)
+- **Physics**: Jolt Physics 3D (configured in project settings)
+- **Viewport**: $1280 \times 800$ native resolution (Canvas items stretch mode, auto-expand aspect)
 
-The game features 36 curated jazz and blues tracks. Every track filename adheres to a strict semantic schema:
-```text
-track_<id>_<style>_<key>_<bpm>bpm.mp3
+### Launching the Game
+```bash
+# Clone the repository
+git clone https://github.com/your-username/colored-time.git
+cd colored-time
+
+# Launch via Godot CLI
+godot --path .
+
+# Or open in Godot Editor
+godot -e --path .
 ```
-
-### 12-Tone Harmonic Color Wheel
-Musical keys map mathematically to the 12-hue HSV chromatic circle, dictating the ambient lighting, directional light hue, and 3D background stage palette:
-
-```
-C  (0.00 / Crimson Red)  -->  G  (0.58 / Royal Blue)  -->  D  (0.08 / Warm Amber)
-A  (0.16 / Golden Yellow) -->  E  (0.25 / Jade Green)  -->  B  (0.33 / Emerald Mint)
-F# (0.42 / Cyan Teal)     -->  Db (0.50 / Cerulean)    -->  Ab (0.66 / Deep Indigo)
-Eb (0.75 / Royal Violet)  -->  Bb (0.83 / Magenta)     -->  F  (0.92 / Hot Pink)
-```
-
-### 6 Procedural Geometry Archetypes
-
-| Level Range | Archetype | BPM Range | Visual Geometry System | Board Mask & Modifiers |
-| :---: | :--- | :---: | :--- | :--- |
-| **01 – 06** | `bird_blues` | 135 – 160 | Angular bebop prism tunnel & crystalline lattices | 6 gem colors, light Chrono Ice outer edges |
-| **07 – 12** | `medium_swing` | 118 – 130 | Concentric swinging gyro-rings & floating ribbons | 6 gem colors, symmetric corner cutouts |
-| **13 – 18** | `slow_ballad` | 72 – 84 | Floating crystalline monoliths & harmonic sine waves | 6 gem colors, relaxed beat window, deep cascades |
-| **19 – 24** | `minor_blues` | 120 – 138 | Tessellated fractal pillars & hexagonal lattices | 7 gem colors, multi-layer Chrono Ice blocks |
-| **25 – 30** | `burning_swing`| 185 – 210 | Kinetic wireframe vortex & spiral polyhedra | 7 gem colors, octagonal corner masks, fast tempo |
-| **31 – 36** | `spiced_blues` | 130 – 152 | Chromatic torus knots & kaleidoscopic mandala shards | 7 gem colors, asymmetric board masks & ice locks |
-
----
-
-## ⚡ Core Match-3 Engine & Rhythm Mechanics
-
-*Source: [`scripts/board/board_logic.gd`](file:///Users/leonid/src/colored-time/scripts/board/board_logic.gd)*
-
-- **Grid Resolution**: $8 \times 8$ orthogonal matrix with active/inactive cell masking support.
-- **On-Beat Rhythm Window**: Swaps occurring within $\pm 120\text{ms}$ of the metronomic beat tick receive a **1.5x score bonus**, a $+5\%$ Chrono Gauge boost, and trigger instantaneous radial vertex shockwaves across the 3D stage.
-- **Power Gem Synthesis**:
-  - **Flame Gem (4-in-a-row)**: Detonates a $3 \times 3$ area blast upon matching (+400 pts).
-  - **Star Gem (T/L-intersection)**: Fires cross-directional row and column laser clears (+600 pts).
-  - **Hypercube (5-in-a-row)**: Synthesizes a prismatic chromatic prism; swapping wipes all gems matching the target color (+1500 pts).
-- **Fail-Safe Reshuffle**: Deterministic move-checker automatically detects deadlocks (0 valid swaps remaining) and performs a clean board reshuffle preserving active ice and power gems.
 
 ---
 
@@ -246,8 +334,6 @@ Eb (0.75 / Royal Violet)  -->  Bb (0.83 / Magenta)     -->  F  (0.92 / Hot Pink)
 The project includes an end-to-end automated headless test suite covering data integrity, algorithmic audio synthesis, match-3 mechanics, UI layouts, and pause menu navigation.
 
 ### Running the Headless Suite
-Execute the test runner via the Godot 4.7+ CLI binary:
-
 ```bash
 # Direct CLI execution (macOS default path)
 /Applications/Godot.app/Contents/MacOS/Godot --headless --script tests/test_runner.gd
@@ -323,11 +409,3 @@ colored-time/
 │   └── test_runner.gd                # Headless CI test suite
 └── tracks/                           # 36 Curated jazz/blues MP3 audio tracks
 ```
-
----
-
-## 🚀 Engine & Platform Requirements
-- **Game Engine**: Godot Engine `4.3+` / `4.7+` (Forward+ Renderer)
-- **Physics Engine**: Jolt Physics 3D
-- **Target Resolution**: $1280 \times 800$ (Canvas items stretch mode, expandable aspect)
-- **Audio Server**: Minimum 2 available buses (`Music`, `SFX`) with `AudioEffectSpectrumAnalyzer`
