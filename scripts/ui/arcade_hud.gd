@@ -520,7 +520,7 @@ func _build_high_scores_layer() -> void:
 
 	# Panel container for scrollable list
 	var panel := Panel.new()
-	panel.custom_minimum_size = Vector2(860, 560)
+	panel.custom_minimum_size = Vector2(920, 560)
 	panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	var psb := StyleBoxFlat.new()
 	psb.bg_color = Color(0.05, 0.04, 0.1, 0.90)
@@ -561,9 +561,13 @@ func _refresh_high_scores_display() -> void:
 	var endless_best: int = save_data.get("endless_high_score", 0)
 	var total_stars: int = 0
 
-	# Header Row
+	# Header Row with matching padding
 	var header_bar := HBoxContainer.new()
 	header_bar.custom_minimum_size = Vector2(0, 32)
+
+	var h_spacer_left := Control.new()
+	h_spacer_left.custom_minimum_size = Vector2(12, 0)
+	header_bar.add_child(h_spacer_left)
 
 	var h_track := Label.new()
 	h_track.text = "TRACK / TITLE"
@@ -593,10 +597,14 @@ func _refresh_high_scores_display() -> void:
 
 	var h_cascade := Label.new()
 	h_cascade.text = "MAX CASCADE"
-	h_cascade.custom_minimum_size = Vector2(110, 0)
+	h_cascade.custom_minimum_size = Vector2(120, 0)
 	h_cascade.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	h_cascade.modulate = Color(0.5, 0.7, 1.0)
 	header_bar.add_child(h_cascade)
+
+	var h_spacer_right := Control.new()
+	h_spacer_right.custom_minimum_size = Vector2(32, 0)
+	header_bar.add_child(h_spacer_right)
 
 	list_vbox.add_child(header_bar)
 
@@ -616,6 +624,10 @@ func _refresh_high_scores_display() -> void:
 		var rsb := StyleBoxFlat.new()
 		rsb.bg_color = Color(0.08, 0.07, 0.16, 0.6) if track_id % 2 == 0 else Color(0.05, 0.04, 0.11, 0.6)
 		rsb.set_corner_radius_all(6)
+		rsb.content_margin_left = 12
+		rsb.content_margin_right = 32
+		rsb.content_margin_top = 4
+		rsb.content_margin_bottom = 4
 		row.add_theme_stylebox_override("panel", rsb)
 
 		var hbox := HBoxContainer.new()
@@ -648,7 +660,7 @@ func _refresh_high_scores_display() -> void:
 
 		var t_casc := Label.new()
 		t_casc.text = "%dx" % stats.get("max_cascade", 0)
-		t_casc.custom_minimum_size = Vector2(110, 0)
+		t_casc.custom_minimum_size = Vector2(120, 0)
 		t_casc.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		t_casc.modulate = Color(0.4, 1.0, 0.6)
 		hbox.add_child(t_casc)

@@ -287,10 +287,14 @@ func test_ui_interaction() -> bool:
 	var hud: ArcadeHUD = main_node.hud
 	var board_view: BoardView = main_node.board_view
 	
-	# 1. Verify Home Screen is initially visible
+	# 1. Verify Home Screen is initially visible and random track audio is playing
 	if not hud.home_layer.visible:
 		printerr("FAIL: Home layer is not visible on boot")
 		return false
+	if not main_node.audio_manager.is_playing:
+		printerr("FAIL: Audio is not playing on Home Screen")
+		return false
+	print("  ✓ Random track audio is playing on Home Screen with active visualizer.")
 	
 	var home_buttons: Array[Button] = []
 	for b in hud.find_children("*", "Button", true, false):
@@ -353,7 +357,18 @@ func test_ui_interaction() -> bool:
 	if track_rows.size() != 36:
 		printerr("FAIL: Expected 36 track rows in high scores leaderboard, found: ", track_rows.size())
 		return false
-	print("  ✓ High Scores screen verified with all 36 tracks in leaderboard.")
+	
+	# Verify audio is playing on High Scores screen
+	if not main_node.audio_manager.is_playing:
+		printerr("FAIL: Audio is not playing on High Scores screen")
+		return false
+	
+	# Verify right-hand padding for scrollbar breathing room
+	var first_row_sb: StyleBox = (track_rows[0] as PanelContainer).get_theme_stylebox("panel")
+	if first_row_sb is StyleBoxFlat and (first_row_sb as StyleBoxFlat).content_margin_right < 24:
+		printerr("FAIL: High Scores row does not have sufficient right padding: ", (first_row_sb as StyleBoxFlat).content_margin_right)
+		return false
+	print("  ✓ High Scores screen verified with all 36 tracks, audio playback, and right-hand scroll padding.")
 
 	# Test ESC from High Scores -> Home
 	main_node._unhandled_input(esc_event)

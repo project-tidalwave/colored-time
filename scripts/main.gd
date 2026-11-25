@@ -48,14 +48,9 @@ func _ready() -> void:
 	_setup_ui()
 	_connect_signals()
 	
-	# Set default ambient background style
-	var t := TrackCatalog.get_track_by_id(1)
-	if not t.is_empty():
-		bg_3d.set_track_style(t["style"], t["key_hue"])
-		sfx.set_track_tuning(t["root_freq"], t["style"])
-	
-	# Start on Home Screen
+	# Start on Home Screen and play a random track with visualizer active
 	hud.show_home()
+	_play_random_menu_track()
 
 func _setup_core_nodes() -> void:
 	# 3D Background
@@ -110,13 +105,29 @@ func _on_new_game() -> void:
 
 func _on_high_scores() -> void:
 	hud.show_high_scores()
+	if not audio_manager.is_playing:
+		_play_random_menu_track()
 
 func _on_exit_requested() -> void:
 	get_tree().quit()
 
 func _on_back_to_home() -> void:
-	audio_manager.stop_track()
 	hud.show_home()
+	if not audio_manager.is_playing:
+		_play_random_menu_track()
+
+func _play_random_menu_track() -> void:
+	var random_id: int = (randi() % 36) + 1
+	var t := TrackCatalog.get_track_by_id(random_id)
+	if t.is_empty():
+		return
+	current_track_id = random_id
+	current_track_data = t
+	bg_3d.set_track_style(t["style"], t["key_hue"])
+	sfx.set_track_tuning(t["root_freq"], t["style"])
+	var stream := load(t["file_path"]) as AudioStream
+	if stream:
+		audio_manager.play_track(stream, float(t["bpm"]))
 
 func _on_track_preview(track_id: int) -> void:
 	current_track_id = track_id
@@ -363,6 +374,9 @@ func _on_track_finished() -> void:
 	elif current_mode == GameMode.ENDLESS:
 		# In endless, loop/cycle to next track seamlessly
 		_advance_endless_track()
+	elif current_mode == GameMode.NONE:
+		# In menu screens, loop / pick next random ambient track
+		_play_random_menu_track()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -403,10 +417,10 @@ func _on_replay_level() -> void:
 
 func _on_return_to_carousel() -> void:
 	is_paused = false
-	audio_manager.stop_track()
 	board_view.visible = false
 	current_mode = GameMode.NONE
 	hud.show_home()
+	_play_random_menu_track()
 
 func _process(delta: float) -> void:
 	var bass := audio_manager.bass_magnitude
