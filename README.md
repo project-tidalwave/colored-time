@@ -267,17 +267,8 @@ Rather than relying on rasterized sprite textures, all gems are rendered **proce
 #### Facet Normal Shading & Chromatic Aberration
 Gems compute internal optical refraction and chromatic dispersion without pre-baked normal maps:
 - **Inner Facet Step**: Evaluates secondary distance fields ($d_{\text{inner}}$) to simulate multi-faceted crystal cuts.
-- **Spectral Dispersion (Hypercube)**: Hue rotates continuously over UV coordinates using fast HSV-to-RGB transformations:
-
-  $$
-  \text{Color}(t, \text{UV}) = \text{HSV}\left(\text{fract}\left(t \cdot 0.35 + \frac{\text{UV}_x + \text{UV}_y}{2.0}\right), 0.9, 1.0\right)
-  $$
-
-- **Anti-Aliased Edge Masking**: Edge borders are smoothed via derivative-informed anti-aliasing:
-
-  $$
-  \alpha = 1.0 - \text{smoothstep}(-0.02, 0.01, d)
-  $$
+- **Spectral Dispersion (Hypercube)**: Hue rotates continuously over UV coordinates using fast HSV-to-RGB transformations: $\text{Color}(t, \text{UV}) = \text{HSV}\left(\text{fract}\left(t \cdot 0.35 + \frac{\text{UV}_x + \text{UV}_y}{2.0}\right), 0.9, 1.0\right)$
+- **Anti-Aliased Edge Masking**: Edge borders are smoothed via derivative-informed anti-aliasing: $\alpha = 1.0 - \text{smoothstep}(-0.02, 0.01, d)$
 
 ---
 
@@ -297,11 +288,7 @@ Tiles locked by Chrono Ice feature dynamic crack propagation and frosted refract
 Audio spectrum analysis runs continuously on the dedicated `Music` audio bus via Godot's `AudioEffectSpectrumAnalyzerInstance`:
 - **Buffer Length**: $100\text{ ms}$ ($0.1\text{ s}$)
 - **FFT Size**: $2048$ bins
-- **Smoothing**: Raw FFT magnitudes are smoothed using frame-independent exponential damping ($\lambda = 20.0$):
-
-$$
-\text{Mag}_{\text{smoothed}} = \text{lerp}\left(\text{Mag}_{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right)
-$$
+- **Smoothing**: Raw FFT magnitudes are smoothed using frame-independent exponential damping ($\lambda = 20.0$): $\text{Mag}_{\text{smoothed}} = \text{lerp}\left(\text{Mag}_{\text{smoothed}}, \text{Mag}_{\text{raw}}, 1.0 - e^{-\lambda \cdot \Delta t}\right)$
 
 #### Algorithmic Chime Waveform Synthesis
 Sound effects are synthesized **in memory at runtime** into 44.1 kHz, 16-bit PCM mono `AudioStreamWAV` buffers with zero reliance on static audio sample files:
