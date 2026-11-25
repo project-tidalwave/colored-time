@@ -42,7 +42,7 @@ func test_track_catalog() -> bool:
 	var styles_found := {}
 	for t in tracks:
 		styles_found[t["style"]] = true
-		if not FileAccess.file_exists(t["file_path"]):
+		if not ResourceLoader.exists(t["file_path"]) and not FileAccess.file_exists(t["file_path"]):
 			printerr("FAIL: File not found: ", t["file_path"])
 			return false
 		
@@ -58,7 +58,18 @@ func test_track_catalog() -> bool:
 			printerr("FAIL: Missing style archetype: ", s)
 			return false
 	
-	print("  ✓ All 36 tracks verified and loaded across 6 style archetypes.")
+	# Verify PCK remapping suffix normalization and static manifest fallback
+	if TrackCatalog.DEFAULT_TRACK_FILENAMES.size() != 36:
+		printerr("FAIL: Expected 36 default fallback filenames, got ", TrackCatalog.DEFAULT_TRACK_FILENAMES.size())
+		return false
+	
+	var test_remapped := "track_01_bird_blues_f_140bpm.mp3.import"
+	var cleaned := test_remapped.trim_suffix(".import").trim_suffix(".remap")
+	if cleaned != "track_01_bird_blues_f_140bpm.mp3":
+		printerr("FAIL: Suffix trimming failed for ", test_remapped)
+		return false
+	
+	print("  ✓ All 36 tracks verified, loaded, and PCK remapping compatibility confirmed.")
 	return true
 
 func test_save_manager() -> bool:

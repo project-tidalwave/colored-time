@@ -19,6 +19,46 @@ const KEY_HUES := {
 	"b": 0.41,
 }
 
+# 36 standard track filenames used as deterministic fallback if directory listing is restricted
+const DEFAULT_TRACK_FILENAMES: Array[String] = [
+	"track_01_bird_blues_f_140bpm.mp3",
+	"track_02_bird_blues_bb_155bpm.mp3",
+	"track_03_bird_blues_c_135bpm.mp3",
+	"track_04_bird_blues_g_145bpm.mp3",
+	"track_05_bird_blues_eb_150bpm.mp3",
+	"track_06_bird_blues_ab_160bpm.mp3",
+	"track_07_medium_swing_f_124bpm.mp3",
+	"track_08_medium_swing_bb_120bpm.mp3",
+	"track_09_medium_swing_g_128bpm.mp3",
+	"track_10_medium_swing_c_118bpm.mp3",
+	"track_11_medium_swing_d_130bpm.mp3",
+	"track_12_medium_swing_a_122bpm.mp3",
+	"track_13_slow_ballad_c_76bpm.mp3",
+	"track_14_slow_ballad_g_80bpm.mp3",
+	"track_15_slow_ballad_f_72bpm.mp3",
+	"track_16_slow_ballad_bb_84bpm.mp3",
+	"track_17_slow_ballad_eb_78bpm.mp3",
+	"track_18_slow_ballad_ab_82bpm.mp3",
+	"track_19_minor_blues_d_125bpm.mp3",
+	"track_20_minor_blues_g_132bpm.mp3",
+	"track_21_minor_blues_c_120bpm.mp3",
+	"track_22_minor_blues_f_138bpm.mp3",
+	"track_23_minor_blues_a_128bpm.mp3",
+	"track_24_minor_blues_e_135bpm.mp3",
+	"track_25_burning_swing_bb_190bpm.mp3",
+	"track_26_burning_swing_f_200bpm.mp3",
+	"track_27_burning_swing_c_195bpm.mp3",
+	"track_28_burning_swing_g_205bpm.mp3",
+	"track_29_burning_swing_eb_185bpm.mp3",
+	"track_30_burning_swing_d_210bpm.mp3",
+	"track_31_spiced_blues_db_130bpm.mp3",
+	"track_32_spiced_blues_gb_142bpm.mp3",
+	"track_33_spiced_blues_b_136bpm.mp3",
+	"track_34_spiced_blues_e_148bpm.mp3",
+	"track_35_spiced_blues_ab_134bpm.mp3",
+	"track_36_spiced_blues_eb_152bpm.mp3"
+]
+
 # Root frequency (approximate 4th octave) for procedural scale synthesis
 const KEY_ROOT_FREQS := {
 	"c": 261.63,
@@ -49,10 +89,17 @@ static func get_all_tracks() -> Array[Dictionary]:
 		dir.list_dir_begin()
 		var file_name = dir.get_next()
 		while file_name != "":
-			if not dir.current_is_dir() and file_name.ends_with(".mp3"):
-				filenames.append(file_name)
+			if not dir.current_is_dir():
+				# In exported PCK archives, Godot renames imported resources to .import or .remap
+				var clean_name := file_name.trim_suffix(".import").trim_suffix(".remap")
+				if clean_name.ends_with(".mp3") and not filenames.has(clean_name):
+					filenames.append(clean_name)
 			file_name = dir.get_next()
 		dir.list_dir_end()
+	
+	# Fallback to static manifest if directory scanning produced no results
+	if filenames.is_empty():
+		filenames = DEFAULT_TRACK_FILENAMES.duplicate()
 	
 	filenames.sort()
 	
